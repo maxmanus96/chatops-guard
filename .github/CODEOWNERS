@@ -1,0 +1,18 @@
+# CODEOWNERS file for ChatOps Guard
+# This file defines who owns and maintains different parts of the repository
+# 
+# Global owner - all files in the repository
+* @maxmanus96
+
+# Documentation
+*.md @maxmanus96
+docs/ @maxmanus96
+
+# Configuration files
+*.yml @maxmanus96
+*.yaml @maxmanus96
+*.json @maxmanus96
+*.toml @maxmanus96
+
+# CI/CD and GitHub workflows
+.github/ @maxmanus96
