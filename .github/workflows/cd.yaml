@@ -1,4 +1,4 @@
-#Createa a terraform related cd pipeline
+# Create a terraform related cd pipeline
 name: CD Pipeline
 
 on:
