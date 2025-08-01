@@ -28,6 +28,19 @@ jobs:
         run: terraform plan
 
       - name: Apply Terraform changes
+        run: terraform init
+        working-directory: infra/envs/prod
+
+      - name: Validate Terraform configuration
+        run: terraform validate
+        working-directory: infra/envs/prod
+
+      - name: Plan Terraform changes
+        run: terraform plan
+        working-directory: infra/envs/prod
+
+      - name: Apply Terraform changes
         run: terraform apply -auto-approve
+        working-directory: infra/envs/prod
         env:
           TF_VAR_example_variable: ${{ secrets.EXAMPLE_VARIABLE }}
