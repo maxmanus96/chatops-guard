@@ -32,4 +32,17 @@ jobs:
 
       # Optionally, you can add a step to check for formatting issues
       - name: Format Terraform files
+        working-directory: infra/envs/dev
+
+      - name: Validate Terraform configuration
+        run: terraform validate
+        working-directory: infra/envs/dev
+
+      - name: Plan Terraform changes
+        run: terraform plan
+        working-directory: infra/envs/dev
+
+      # Optionally, you can add a step to check for formatting issues
+      - name: Format Terraform files
         run: terraform fmt -check
+        working-directory: infra/envs/dev
