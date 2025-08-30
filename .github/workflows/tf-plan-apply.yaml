@@ -71,7 +71,7 @@ jobs:
 
       # -------- tfsec (security) --------
       - name: Run tfsec
-        uses: aquasecurity/tfsec-action@v1
+        uses: aquasecurity/tfsec-action@v1.0.0
         with:
           working_directory: .
           # set to 'true' if you want PRs to show findings but not fail
