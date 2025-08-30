@@ -1,32 +1,23 @@
-# ------------------------------------------------------------------
-# File: .github/workflows/tf-plan-apply.yml
-# Derived from: https://github.com/Azure-Samples/terraform-github-actions/blob/main/.github/workflows/tf-plan-apply.yml
-# Original copyright (c) Microsoft Corporation.
-# Licensed under the MIT License – see LICENSE file in the project root.
-# Modifications (c) 2025 Hüseyin Hürkan Karaman <h.h.k.1996@hotmail.com>
-# ------------------------------------------------------------------
-
-# This workflow runs Terraform Plan and Apply on pushes to the main branch and pull requests targeting the main branch.
-# It uses OIDC authentication for Azure, initializes Terraform, formats the configuration, generates an execution plan, and applies changes if there are any.
-
 name: 'Terraform Plan/Apply'
 
 on:
   push:
-    branches:
-    - main
+    branches: [ main ]
   pull_request:
-    branches:
-    - main
+    branches: [ main ]
 
-#Special permissions required for OIDC authentication
 permissions:
   id-token: write
   contents: read
   pull-requests: write
 
-# These environment variables are used by the Terraform Azure provider to set up OIDC (OpenID Connect) authentication.
+concurrency:
+  group: tf-${{ github.workflow }}-${{ github.ref_name }}
+  cancel-in-progress: false
+
 env:
+  TF_IN_AUTOMATION: "1"
+  ARM_USE_OIDC: "true"
   ARM_CLIENT_ID: "${{ secrets.AZURE_CLIENT_ID }}"
   ARM_SUBSCRIPTION_ID: "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
   ARM_TENANT_ID: "${{ secrets.AZURE_TENANT_ID }}"
@@ -35,123 +26,144 @@ jobs:
   terraform-plan:
     name: 'Terraform Plan'
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     env:
-      #this is needed since we are running terraform with read-only permissions
       ARM_SKIP_PROVIDER_REGISTRATION: true
     outputs:
       tfplanExitCode: ${{ steps.tf-plan.outputs.exitcode }}
 
     steps:
-    # Checkout the repository to the GitHub Actions runner
-    - name: Checkout
-      uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    # Install the latest version of the Terraform CLI
-    - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v3
-      with:
-        terraform_wrapper: false
+      - name: Azure OIDC Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ env.ARM_CLIENT_ID }}
+          tenant-id: ${{ env.ARM_TENANT_ID }}
+          subscription-id: ${{ env.ARM_SUBSCRIPTION_ID }}
 
-    # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
-    - name: Terraform Init
-      run: terraform init
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
 
-    # Checks that all Terraform configuration files adhere to a canonical format
-    # Will fail the build if not
-    - name: Terraform Format
-      run: terraform fmt -check
+      - name: Terraform Init
+        run: terraform init -input=false
 
-    # Generates an execution plan for Terraform
-    # An exit code of 0 indicated no changes, 1 a terraform failure, 2 there are pending changes.
-    - name: Terraform Plan
-      id: tf-plan
-      run: |
-        export exitcode=0
-        terraform plan -detailed-exitcode -no-color -out tfplan || export exitcode=$?
+      - name: Terraform Format
+        run: terraform fmt -check
 
-        echo "exitcode=$exitcode" >> $GITHUB_OUTPUT
-        
-        if [ $exitcode -eq 1 ]; then
-          echo Terraform Plan Failed!
-          exit 1
-        else 
-          exit 0
-        fi
-        
-    # Save plan to artifacts  
-    - name: Publish Terraform Plan
-      uses: actions/upload-artifact@v4
-      with:
-        name: tfplan
-        path: tfplan
-        
-    # Create string output of Terraform Plan
-    - name: Create String Output
-      id: tf-plan-string
-      run: |
-        TERRAFORM_PLAN=$(terraform show -no-color tfplan)
-        
-        delimiter="$(openssl rand -hex 8)"
-        echo "summary<<${delimiter}" >> $GITHUB_OUTPUT
-        echo "## Terraform Plan Output" >> $GITHUB_OUTPUT
-        echo "<details><summary>Click to expand</summary>" >> $GITHUB_OUTPUT
-        echo "" >> $GITHUB_OUTPUT
-        echo '```terraform' >> $GITHUB_OUTPUT
-        echo "$TERRAFORM_PLAN" >> $GITHUB_OUTPUT
-        echo '```' >> $GITHUB_OUTPUT
-        echo "</details>" >> $GITHUB_OUTPUT
-        echo "${delimiter}" >> $GITHUB_OUTPUT
-        
-    # Publish Terraform Plan as task summary
-    - name: Publish Terraform Plan to Task Summary
-      env:
-        SUMMARY: ${{ steps.tf-plan-string.outputs.summary }}
-      run: |
-        echo "$SUMMARY" >> $GITHUB_STEP_SUMMARY
-      
-    # If this is a PR post the changes
-    - name: Push Terraform Output to PR
-      if: github.ref != 'refs/heads/main'
-      uses: actions/github-script@v7
-      env:
-        SUMMARY: "${{ steps.tf-plan-string.outputs.summary }}"
-      with:
+      - name: Terraform Validate
+        run: terraform validate
+
+      # -------- TFLint --------
+      - name: Setup TFLint
+        uses: terraform-linters/setup-tflint@v4
+
+      - name: TFLint Init (downloads plugins if .tflint.hcl exists)
+        run: tflint --init
+
+      - name: Run TFLint
+        run: tflint -f compact
+        # set continue-on-error: true if you prefer warnings instead of failing PRs
+        continue-on-error: false
+
+      # -------- tfsec (security) --------
+      - name: Run tfsec
+        uses: aquasecurity/tfsec-action@v1
+        with:
+          working_directory: .
+          # set to 'true' if you want PRs to show findings but not fail
+          soft_fail: false
+
+      # -------- Plan --------
+      - name: Terraform Plan
+        id: tf-plan
+        run: |
+          set +e
+          terraform plan -detailed-exitcode -no-color -input=false -out=tfplan
+          ec=$?
+          if [ $ec -eq 1 ]; then
+            echo "exitcode=1" >> $GITHUB_OUTPUT
+            echo "Terraform Plan Failed!"
+            exit 1
+          else
+            echo "exitcode=$ec" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+      - name: Upload plan artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan
+          path: tfplan
+          if-no-files-found: error
+
+      - name: Plan Summary
+        id: tfplan-summary
+        run: |
+          sudo apt-get update >/dev/null && sudo apt-get install -y jq >/dev/null
+          SUMMARY=$(terraform show -json tfplan | jq -r '
+            .resource_changes
+            | (map(.change.actions) // [])
+            | { 
+                create: map(index("create"))    | map(select(.!=null)) | length,
+                update: map(index("update"))    | map(select(.!=null)) | length,
+                delete: map(index("delete"))    | map(select(.!=null)) | length,
+                replace: map(if (index("create") and index("delete")) then 1 else 0 end) | add // 0
+              }
+            | "create=\(.create) update=\(.update) delete=\(.delete) replace=\(.replace)"')
+          echo "summary=$SUMMARY" >> $GITHUB_OUTPUT
+
+      - name: Publish Plan to Summary
+        run: |
+          echo "## Terraform Plan Summary" >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.tfplan-summary.outputs.summary }}" >> $GITHUB_STEP_SUMMARY
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const body = `${process.env.SUMMARY}`;
+            const body = `## Terraform Plan Summary\n${{ toJson(steps.tfplan-summary.outputs.summary) }}`;
             github.rest.issues.createComment({
-                issue_number: context.issue.number,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                body: body
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body
             })
-                
+
   terraform-apply:
     name: 'Terraform Apply'
-    if: github.ref == 'refs/heads/main' && needs.terraform-plan.outputs.tfplanExitCode == 2
+    if: github.ref == 'refs/heads/main' && needs.terraform-plan.outputs.tfplanExitCode == '2'
     runs-on: ubuntu-latest
     environment: production
     needs: [terraform-plan]
-    
+    timeout-minutes: 30
+
     steps:
-    # Checkout the repository to the GitHub Actions runner
-    - name: Checkout
-      uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    # Install the latest version of Terraform CLI and configure the Terraform CLI configuration file with a Terraform Cloud user API token
-    - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v3
+      - name: Azure OIDC Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ env.ARM_CLIENT_ID }}
+          tenant-id: ${{ env.ARM_TENANT_ID }}
+          subscription-id: ${{ env.ARM_SUBSCRIPTION_ID }}
 
-    # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
-    - name: Terraform Init
-      run: terraform init
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
 
-    # Download saved plan from artifacts  
-    - name: Download Terraform Plan
-      uses: actions/download-artifact@v4
-      with:
-        name: tfplan
+      - name: Terraform Init
+        run: terraform init -input=false
 
-    # Terraform Apply
-    - name: Terraform Apply
-      run: terraform apply -auto-approve tfplan
+      - name: Download plan artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: tfplan
+
+      - name: Terraform Apply
+        run: terraform apply -lock-timeout=5m -auto-approve tfplan
