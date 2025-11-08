@@ -7,6 +7,7 @@ variable "state_sa_name" {
   default = "chatopsstateguard01" # 3–24 lower-case
 }
 
+
 variable "location" {
   default = "westeurope" # eg "westeurope"
 }
