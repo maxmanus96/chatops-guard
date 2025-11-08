@@ -5,4 +5,5 @@
 #   node_count          = 1
 #   enable_keda         = true
 #   tags                = local.tags
+#   required_version = ">= 1.5.0"
 # }

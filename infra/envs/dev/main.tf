@@ -44,3 +44,12 @@ resource "azurerm_storage_container" "tfstate" {
 provider "azurerm" {
   features {}
 }
+
+terraform {
+  required_providers {
+    azurerm = {
+      source  = "hashicorp/azurerm"
+      version = "~> 3.110"
+    }
+  }
+}
