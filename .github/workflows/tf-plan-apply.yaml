@@ -120,7 +120,7 @@ jobs:
                 create: map(index("create"))    | map(select(.!=null)) | length,
                 update: map(index("update"))    | map(select(.!=null)) | length,
                 delete: map(index("delete"))    | map(select(.!=null)) | length,
-                replace: map(if (index("create") and index("delete")) then 1 else 0 end) | add // 0
+                replace: (map(if (index("create") and index("delete")) then 1 else 0 end) | add) // 0
               }
             | "create=\(.create) update=\(.update) delete=\(.delete) replace=\(.replace)"')
           echo "summary=$SUMMARY" >> $GITHUB_OUTPUT
