@@ -153,3 +153,11 @@ if [[ -d "infra/envs/dev" ]]; then
 fi
 
 echo "✅ init_infra completed."
+
+# Prod Bootstrap Steps
+
+# export prod-specific values and rerun the existing script:
+# STATE_RG=rg-chatops-guard-prod-state SA_NAME=chatopsstateprod01 CONTAINER=tfstate-prod LOCATION=westeurope APP_NAME=chatops-guard-gh-prod BRANCH=main GH_REPO="maxmanus96/chatops-guard" ./scripts/init_infra.sh
+# Let the script create/enforce the prod RG, storage account, container, blob versioning, Azure AD app/SP, federated credentials, and role assignments just like it does for dev.
+# Copy the backend snippet it prints and update infra/envs/prod/backend.tf (use a prod-specific key, e.g. infra-prod.tfstate; set required_version/required_providers if not already there).
+# Run terraform init -reconfigure inside infra/envs/prod so Terraform points at the new state backend.

@@ -38,18 +38,3 @@ resource "azurerm_storage_container" "tfstate" {
   name               = "tfstate"
   storage_account_id = azurerm_storage_account.state.id
 }
-
-
-#provider azurerm
-provider "azurerm" {
-  features {}
-}
-
-terraform {
-  required_providers {
-    azurerm = {
-      source  = "hashicorp/azurerm"
-      version = "~> 3.110"
-    }
-  }
-}
