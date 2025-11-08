@@ -95,6 +95,12 @@ az ad app federated-credential create --id "$APP_ID" \
   --issuer "https://token.actions.githubusercontent.com" \
   --audience "api://AzureADTokenExchange" \
   --subject "$SUBJECT" >/dev/null 2>&1 || true
+az ad app federated-credential create --id "$APP_ID" --parameters '{
+  "name": "gha-pr",
+  "issuer": "https://token.actions.githubusercontent.com",
+  "subject": "repo:maxmanus96/chatops-guard:pull_request",
+  "audiences": ["api://AzureADTokenExchange"]
+}'
 
 echo "▶ Assigning roles…"
 SCOPE_SUB="/subscriptions/$SUBSCRIPTION_ID"

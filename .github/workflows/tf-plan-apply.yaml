@@ -58,16 +58,17 @@ jobs:
         run: terraform validate
 
       # -------- TFLint --------
-      - name: Setup TFLint
+      # Lint Terraform with TFLint on PRs
+      - name: Set up TFLint
         uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: v0.59.1   # Use >=0.54.0 where `call_module_type` is supported
 
-      - name: TFLint Init (downloads plugins if .tflint.hcl exists)
+      - name: TFLint init (download plugins/rulesets)
         run: tflint --init
 
-      - name: Run TFLint
-        run: tflint -f compact
-        # set continue-on-error: true if you prefer warnings instead of failing PRs
-        continue-on-error: false
+      - name: TFLint run (recursive, local modules only)
+        run: tflint --recursive --call-module-type=local
 
       # -------- tfsec (security) --------
       - name: Run tfsec
