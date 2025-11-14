@@ -107,6 +107,17 @@ graph TB
 
 Configuration details and examples will be documented as features are implemented.
 
+## Infrastructure & Security Notes
+
+- Terraform lives under `infra/envs/<env>` and currently provisions only the `dev` remote-state resources (storage account, container, resource group). Production definitions exist but remain dormant until explicitly enabled via GitHub Actions `TF_TARGET_ENVS`.
+- GitHub Actions workflow `.github/workflows/tf-plan-apply.yaml` uses a matrix to run `plan/apply` per environment while scoping Terraform commands to `infra/envs/<env>` so prod is untouched unless opted in.
+- Security hardening applied to the dev state storage account:
+  - Blob/queue logging enabled with retention.
+  - Public/anonymous access disabled and access enforced via Azure AD (shared keys turned off, OAuth default enabled).
+- Budget-conscious items still pending for dev (tracked in [plan.md](plan.md)):
+  - Geo-redundant replication (CKV_AZURE_206) intentionally left as LRS to minimize cost.
+  - Customer-managed keys (CKV2_AZURE_1), SAS expiration policy (CKV2_AZURE_41), and private endpoints (CKV2_AZURE_33) are deferred until prod hardening.
+
 ## Contributing
 
 We welcome contributions to ChatOps Guard! Here's how you can help:
