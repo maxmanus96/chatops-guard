@@ -21,44 +21,44 @@ resource "azurerm_storage_account" "state" {
   account_replication_type        = "LRS"
   account_kind                    = "StorageV2"
   public_network_access_enabled   = true
-  allow_blob_public_access        = false
   allow_nested_items_to_be_public = false
   default_to_oauth_authentication = true
   shared_access_key_enabled       = false
   min_tls_version                 = "TLS1_2"
 
-  blob_properties {
-    versioning_enabled = true
-    logging {
-      delete  = true
-      read    = true
-      write   = true
-      version = "2.0"
-      retention_policy {
-        days = 7
-      }
-    }
-    delete_retention_policy {
-      days = 7
-    }
-    container_delete_retention_policy {
-      days = 7
-    }
-  }
+  # network_rules { #
+  #   default_action             = "Allow"
+  #   ip_rules                   = ["100.0.0.1"]
+  # }
 
-  queue_properties {
-    logging {
-      delete  = true
-      read    = true
-      write   = true
-      version = "1.0"
-      retention_policy {
-        days = 7
-      }
-    }
+  tags = {
+    environment = "dev"
   }
-
 }
+
+resource "azurerm_log_analytics_workspace" "logs" {
+  name                = "log-chatops-guard-dev"
+  location            = azurerm_resource_group.state.location
+  resource_group_name = azurerm_resource_group.state.name
+  sku                 = "PerGB2018"
+  retention_in_days   = 30 # keep dev costs down; bump in prod if needed
+}
+
+resource "azurerm_monitor_diagnostic_setting" "state_logs" {
+  name                       = "diag-storage-state"
+  target_resource_id         = azurerm_storage_account.state.id
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.logs.id
+
+  # Blob service logs/metrics
+  enabled_log {
+    category = "AuditEvent"
+  }
+
+  enabled_metric {
+    category = "AllMetrics"
+  }
+}
+
 
 resource "azurerm_storage_container" "tfstate" {
   name               = "tfstate"
