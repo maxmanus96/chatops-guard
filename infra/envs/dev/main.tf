@@ -12,7 +12,10 @@ resource "azurerm_resource_group" "state" {
   location = var.location      # eg "westeurope"
 }
 
-#tfsec:ignore:CKV_AZURE_206 # LRS kept intentionally for budget-friendly dev state
+#checkov:skip=CKV2_AZURE_1: CMK deferred in dev to avoid Key Vault cost/overhead
+#checkov:skip=CKV_AZURE_206: LRS kept intentionally for budget-friendly dev state
+#checkov:skip=CKV_AZURE_59: public network kept on so GH Actions can reach state backend
+#checkov:skip=CKV2_AZURE_33: private endpoint deferred for dev to avoid VNet/DNS cost/complexity
 resource "azurerm_storage_account" "state" {
   name                            = var.state_sa_name # 3–24 lower-case
   resource_group_name             = azurerm_resource_group.state.name
@@ -25,6 +28,14 @@ resource "azurerm_storage_account" "state" {
   default_to_oauth_authentication = true
   shared_access_key_enabled       = false
   min_tls_version                 = "TLS1_2"
+  blob_properties {
+    delete_retention_policy {
+      days = 7
+    }
+    container_delete_retention_policy {
+      days = 7
+    }
+  }
 
   # network_rules { #
   #   default_action             = "Allow"
@@ -52,6 +63,18 @@ resource "azurerm_monitor_diagnostic_setting" "state_logs" {
   # Blob service logs/metrics
   enabled_log {
     category = "AuditEvent"
+  }
+
+  enabled_log {
+    category = "StorageRead"
+  }
+
+  enabled_log {
+    category = "StorageWrite"
+  }
+
+  enabled_log {
+    category = "StorageDelete"
   }
 
   enabled_metric {
