@@ -114,13 +114,13 @@ jobs:
         run: |
           sudo apt-get update >/dev/null && sudo apt-get install -y jq >/dev/null
           SUMMARY=$(terraform -chdir=${{ env.TF_ENV_DIR }} show -json tfplan | jq -r '
-            .resource_changes
-            | (map(.change.actions) // [])
+            (.resource_changes | if . == null then [] else . end)
+            | map(.change.actions | if . == null then [] else . end)
             | { 
                 create: map(index("create"))    | map(select(.!=null)) | length,
                 update: map(index("update"))    | map(select(.!=null)) | length,
                 delete: map(index("delete"))    | map(select(.!=null)) | length,
-                replace: (map(if (index("create") and index("delete")) then 1 else 0 end) | add) // 0
+                replace: (map(if (index("create") and index("delete")) then 1 else 0 end) | add | if . == null then 0 else . end)
               }
             | "create=\(.create) update=\(.update) delete=\(.delete) replace=\(.replace)"')
           echo "summary=$SUMMARY" >> $GITHUB_OUTPUT
