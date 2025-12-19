@@ -115,6 +115,9 @@ Configuration details and examples will be documented as features are implemente
   - Public network access stays enabled so GitHub Actions can reach the backend; blob/anonymous access is disabled and shared keys are off (Azure AD auth only), but the endpoint remains reachable publicly.
   - Diagnostics go to a Log Analytics workspace with 30-day retention (current dev setting).
   - Soft delete enabled on blob/container operations (7 days) to recover accidental deletions.
+  - Checkov skips in dev (documented inline in `infra/envs/dev/main.tf`) due to budget/complexity:
+    - CKV2_AZURE_1 (CMK), CKV_AZURE_206 (GRS replication), CKV_AZURE_59 (public network), CKV2_AZURE_33 (private endpoint).
+    - CKV_AZURE_33 (queue logging), CKV2_AZURE_21 (blob read logging).
 - Budget-conscious items still pending for dev (tracked in [plan.md](plan.md)):
   - Geo-redundant replication (CKV_AZURE_206) intentionally left as LRS to minimize cost.
   - Customer-managed keys (CKV2_AZURE_1), SAS expiration policy (CKV2_AZURE_41), and private endpoints (CKV2_AZURE_33) are deferred until prod hardening.

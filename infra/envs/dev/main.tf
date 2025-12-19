@@ -12,11 +12,12 @@ resource "azurerm_resource_group" "state" {
   location = var.location      # eg "westeurope"
 }
 
-#checkov:skip=CKV2_AZURE_1: CMK deferred in dev to avoid Key Vault cost/overhead
-#checkov:skip=CKV_AZURE_206: LRS kept intentionally for budget-friendly dev state
-#checkov:skip=CKV_AZURE_59: public network kept on so GH Actions can reach state backend
-#checkov:skip=CKV2_AZURE_33: private endpoint deferred for dev to avoid VNet/DNS cost/complexity
 resource "azurerm_storage_account" "state" {
+  # checkov:skip=CKV2_AZURE_1: CMK deferred in dev to avoid Key Vault cost/overhead
+  # checkov:skip=CKV_AZURE_206: LRS kept intentionally for budget-friendly dev state
+  # checkov:skip=CKV_AZURE_59: public network kept on so GH Actions can reach state backend
+  # checkov:skip=CKV2_AZURE_33: private endpoint deferred for dev to avoid VNet/DNS cost/complexity
+  # checkov:skip=CKV_AZURE_33: using Azure Monitor diagnostics instead of legacy queue logging
   name                            = var.state_sa_name # 3–24 lower-case
   resource_group_name             = azurerm_resource_group.state.name
   location                        = azurerm_resource_group.state.location
@@ -84,6 +85,7 @@ resource "azurerm_monitor_diagnostic_setting" "state_logs" {
 
 
 resource "azurerm_storage_container" "tfstate" {
+  # checkov:skip=CKV2_AZURE_21: for now skip logging for Blob service to avoid extra cost in dev
   name               = "tfstate"
   storage_account_id = azurerm_storage_account.state.id
 }

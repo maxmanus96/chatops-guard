@@ -19,6 +19,7 @@
 | Disable public/anonymous access | ⚠️ | Blob/anonymous access flags are off and soft delete enabled, but public network access remains enabled for CI. |
 | Enforce Azure AD auth only | ✅ | `shared_access_key_enabled = false`, `default_to_oauth_authentication = true`. |
 | Diagnostics to Log Analytics | ✅ | Dev LA workspace with 30-day retention (aligns with current setup; adjust if cost grows). |
+| Checkov skips (dev) | ⚠️ | CKV2_AZURE_1, CKV_AZURE_206, CKV_AZURE_59, CKV2_AZURE_33, CKV_AZURE_33, CKV2_AZURE_21 (documented inline). |
 | SAS expiration policy | ⏳ | Terraform support limited; revisit when prod environment is built. |
 | Customer-managed keys | ⏳ | Requires Key Vault + key rotation; deferred for cost reasons. |
 | Private endpoints | ⏳ | Adds VNets/DNS and billing overhead; hold until prod readiness. |
