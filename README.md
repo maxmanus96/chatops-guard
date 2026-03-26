@@ -107,6 +107,21 @@ graph TB
 
 Configuration details and examples will be documented as features are implemented.
 
+## Infrastructure & Security Notes
+
+- Terraform lives under `infra/envs/<env>` and currently provisions only the `dev` remote-state resources (storage account, container, resource group). Production definitions exist but remain dormant until explicitly enabled via GitHub Actions `TF_TARGET_ENVS`.
+- GitHub Actions workflow `.github/workflows/tf-plan-apply.yaml` uses a matrix to run `plan/apply` per environment while scoping Terraform commands to `infra/envs/<env>` so prod is untouched unless opted in.
+- Security posture for the dev state storage account balances CI access with cost:
+  - Public network access stays enabled so GitHub Actions can reach the backend; blob/anonymous access is disabled and shared keys are off (Azure AD auth only), but the endpoint remains reachable publicly.
+  - Diagnostics go to a Log Analytics workspace with 30-day retention (current dev setting).
+  - Soft delete enabled on blob/container operations (7 days) to recover accidental deletions.
+  - Checkov skips in dev (documented inline in `infra/envs/dev/main.tf`) due to budget/complexity:
+    - CKV2_AZURE_1 (CMK), CKV_AZURE_206 (GRS replication), CKV_AZURE_59 (public network), CKV2_AZURE_33 (private endpoint).
+    - CKV_AZURE_33 (queue logging), CKV2_AZURE_21 (blob read logging).
+- Budget-conscious items still pending for dev (tracked in [plan.md](plan.md)):
+  - Geo-redundant replication (CKV_AZURE_206) intentionally left as LRS to minimize cost.
+  - Customer-managed keys (CKV2_AZURE_1), SAS expiration policy (CKV2_AZURE_41), and private endpoints (CKV2_AZURE_33) are deferred until prod hardening.
+
 ## Contributing
 
 We welcome contributions to ChatOps Guard! Here's how you can help:

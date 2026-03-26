@@ -1,0 +1,197 @@
+name: 'Terraform Plan/Apply'
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: tf-${{ github.workflow }}-${{ github.ref_name }}
+  cancel-in-progress: false
+
+env:
+  TF_IN_AUTOMATION: "1"
+  ARM_USE_OIDC: "true"
+  ARM_CLIENT_ID: "${{ secrets.AZURE_CLIENT_ID }}"
+  ARM_SUBSCRIPTION_ID: "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
+  ARM_TENANT_ID: "${{ secrets.AZURE_TENANT_ID }}"
+  TF_TARGET_ENVS: ${{ vars.TF_TARGET_ENVS || '["dev"]' }}
+
+jobs:
+  terraform-plan:
+    name: 'Terraform Plan (${{ matrix.environment }})'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        environment: ${{ fromJson(vars.TF_TARGET_ENVS || '["dev"]') }}
+    env:
+      ARM_SKIP_PROVIDER_REGISTRATION: true
+      TF_ENV_DIR: infra/envs/${{ matrix.environment }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure OIDC Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+
+      - name: Terraform Init
+        run: terraform -chdir=${{ env.TF_ENV_DIR }} init -input=false
+
+      - name: Terraform Format
+        run: terraform -chdir=${{ env.TF_ENV_DIR }} fmt -check
+
+      - name: Terraform Validate
+        run: terraform -chdir=${{ env.TF_ENV_DIR }} validate
+
+      # -------- TFLint --------
+      # Lint Terraform with TFLint on PRs
+      - name: Set up TFLint
+        uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: v0.59.1   # Use >=0.54.0 where `call_module_type` is supported
+
+      - name: TFLint init (download plugins/rulesets)
+        run: tflint --init
+        working-directory: ${{ env.TF_ENV_DIR }}
+
+      - name: TFLint run (recursive, local modules only)
+        run: tflint --recursive --call-module-type=local
+        working-directory: ${{ env.TF_ENV_DIR }}
+
+      # -------- tfsec (security) --------
+      - name: Run tfsec
+        uses: aquasecurity/tfsec-action@v1.0.0
+        with:
+          working_directory: ${{ env.TF_ENV_DIR }}
+          # set to 'true' if you want PRs to show findings but not fail
+          soft_fail: false
+
+      # -------- Plan --------
+      - name: Terraform Plan
+        id: tf-plan
+        run: |
+          set +e
+          terraform -chdir=${{ env.TF_ENV_DIR }} plan -detailed-exitcode -no-color -input=false -out=tfplan
+          ec=$?
+          echo "$ec" > "${{ env.TF_ENV_DIR }}/tfplan.exitcode"
+          if [ $ec -eq 1 ]; then
+            echo "exitcode=1" >> $GITHUB_OUTPUT
+            echo "Terraform Plan Failed!"
+            exit 1
+          else
+            echo "exitcode=$ec" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+      - name: Upload plan artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan-${{ matrix.environment }}
+          path: |
+            ${{ env.TF_ENV_DIR }}/tfplan
+            ${{ env.TF_ENV_DIR }}/tfplan.exitcode
+          if-no-files-found: error
+
+      - name: Plan Summary
+        id: tfplan-summary
+        run: |
+          sudo apt-get update >/dev/null && sudo apt-get install -y jq >/dev/null
+          SUMMARY=$(terraform -chdir=${{ env.TF_ENV_DIR }} show -json tfplan | jq -r '
+            (.resource_changes | if . == null then [] else . end)
+            | map(.change.actions | if . == null then [] else . end)
+            | { 
+                create: map(index("create"))    | map(select(.!=null)) | length,
+                update: map(index("update"))    | map(select(.!=null)) | length,
+                delete: map(index("delete"))    | map(select(.!=null)) | length,
+                replace: (map(if (index("create") and index("delete")) then 1 else 0 end) | add | if . == null then 0 else . end)
+              }
+            | "create=\(.create) update=\(.update) delete=\(.delete) replace=\(.replace)"')
+          echo "summary=$SUMMARY" >> $GITHUB_OUTPUT
+
+      - name: Publish Plan to Summary
+        run: |
+          echo "## Terraform Plan Summary (${{ matrix.environment }})" >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.tfplan-summary.outputs.summary }}" >> $GITHUB_STEP_SUMMARY
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const body = `## Terraform Plan Summary (${process.env.TF_ENV})\n${{ toJson(steps.tfplan-summary.outputs.summary) }}`;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body
+            })
+        env:
+          TF_ENV: ${{ matrix.environment }}
+
+  terraform-apply:
+    name: 'Terraform Apply (${{ matrix.environment }})'
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: ${{ matrix.environment == 'prod' && 'production' || 'development' }}
+    needs: terraform-plan
+    strategy:
+      fail-fast: false
+      matrix:
+        environment: ${{ fromJson(vars.TF_TARGET_ENVS || '["dev"]') }}
+    timeout-minutes: 30
+    env:
+      TF_ENV_DIR: infra/envs/${{ matrix.environment }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure OIDC Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        run: terraform -chdir=${{ env.TF_ENV_DIR }} init -input=false
+
+      - name: Download plan artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: tfplan-${{ matrix.environment }}
+          path: ${{ env.TF_ENV_DIR }}
+
+      - name: Check plan exit code
+        id: plan-metadata
+        run: |
+          EXITCODE=$(cat "${{ env.TF_ENV_DIR }}/tfplan.exitcode")
+          echo "exitcode=$EXITCODE" >> $GITHUB_OUTPUT
+          if [ "$EXITCODE" != "2" ]; then
+            echo "No changes to apply for ${{ matrix.environment }}."
+          fi
+
+      - name: Terraform Apply
+        if: steps.plan-metadata.outputs.exitcode == '2'
+        run: terraform -chdir=${{ env.TF_ENV_DIR }} apply -lock-timeout=5m -auto-approve tfplan
