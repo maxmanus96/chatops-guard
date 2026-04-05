@@ -26,17 +26,18 @@
 | Geo-redundant replication | ⏳ | LRS kept for budget; document justification in code comment. |
 
 ## Next Steps
-1. Decide when to enable prod in CI by setting `TF_TARGET_ENVS` repo variable (e.g., `["dev","prod"]`), once prod resources are defined.
-2. Implement SAS policy, CMK, and private endpoints when moving beyond budget-friendly dev.
-3. Extend Terraform modules beyond state bootstrap (e.g., AKS module) when infrastructure scope broadens.
-4. If Log Analytics cost is high in dev, consider lowering retention, switching diagnostics to a storage account, or making diagnostics optional per environment.
+1. Mark PR `#40` ready, merge the green AKS module skeleton, and keep AKS disabled in `infra/envs/dev` until environment wiring is explicitly planned.
+2. Merge PR `#41` next so Terraform workflow scope and validation stay aligned with the real repo layout.
+3. Turn the deferred AKS hardening items from PR `#40` into follow-up implementation slices: upgrade channel, API server access model, networking baseline, and Secrets Store CSI rotation.
+4. Decide when to enable prod in CI by setting `TF_TARGET_ENVS` repo variable (e.g., `["dev","prod"]`), once prod resources are defined.
+5. If Log Analytics cost is high in dev, consider lowering retention, switching diagnostics to a storage account, or making diagnostics optional per environment.
 
-## ROI Priority Order (2026-03-26)
+## ROI Priority Order (2026-04-06)
 
 ### Recommendation
-- Merge the first infra PR if checks are green and there are no unresolved review comments.
-- Continue the next ticket from a clean mainline instead of stacking more infra work on the same PR.
-- If the next ticket is Terraform AKS, continue issue `#1` in the existing draft PR `#40`. The module skeleton is already in progress and validated locally; do not apply a dev AKS cluster yet.
+- Mark PR `#40` ready and merge it from the current green state.
+- Merge PR `#41` next so the Terraform workflow behavior stays aligned with the repo's actual roots.
+- Continue issue `#1` after merge as small hardening slices only; do not apply a dev AKS cluster yet.
 - Treat `#2`, `#5`, and `#13` as umbrella or cleanup issues; do not let them outrank the more concrete scoped issues.
 
 ### Highest ROI / lowest direct cloud cost
@@ -60,8 +61,8 @@
    - `#23`, `#25`, `#26`, `#37`
 
 ## Suggested Sequence
-1. Merge the current green infra PR.
-2. Finish architecture/bootstrap follow-up work and reconcile legacy umbrella issues.
-3. Finish and merge the current AKS module work (`#1` / draft PR `#40`) before wiring any environment root or applying AKS in dev.
+1. Mark PR `#40` ready and merge the current green AKS module PR.
+2. Merge PR `#41` so CI stays fast, scoped, and predictable for the next tickets.
+3. Convert the deferred AKS code-scanning findings into small follow-up tickets before wiring any environment root or applying AKS in dev.
 4. Tighten docs and quick-start guidance so the repo is easier to evaluate and continue from.
-5. Then return to CI/CD and the smallest application skeleton work.
+5. Then return to the next highest-ROI CI/CD and application skeleton work.

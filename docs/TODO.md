@@ -1,6 +1,6 @@
 # TODO
 
-Source: open GitHub issues in `maxmanus96/chatops-guard` as retrieved via GitHub MCP on 2026-03-27. Issue `#1` is actively in progress in draft PR `#40` and validated locally.
+Source: open GitHub issues in `maxmanus96/chatops-guard` as retrieved via GitHub MCP on 2026-03-27. Issue `#1` is active in PR `#40`, and the latest branch update is green and ready for review.
 
 This file is a grouped planning view of the current open issues. Some open issues are umbrella or backlog-management issues, so they are represented as planning or cleanup tasks where appropriate rather than duplicated as standalone implementation work.
 
@@ -19,15 +19,28 @@ This file is a grouped planning view of the current open issues. Some open issue
 
 ### AKS and platform services baseline
 - Priority: P1
-- Short summary: Move from state-bootstrap-only Terraform toward the first real platform components needed to host the application. Issue `#1` is already in progress in draft PR `#40`.
+- Short summary: Move from state-bootstrap-only Terraform toward the first real platform components needed to host the application. Issue `#1` is in PR `#40`; the next step after merge is controlled hardening, not immediate AKS deployment in dev.
 - Estimated effort: 4-7 days
 - Dependencies: final Terraform module structure, target Azure region and sizing, environment promotion plan
 - Tasks:
-  - [ ] #1 Define minimal AKS module (active in draft PR #40)
+  - [ ] #1 Define minimal AKS module (PR #40 is green and ready for review)
+  - [ ] Merge PR #40 and keep AKS disabled in `infra/envs/dev` until environment wiring is explicitly planned
   - [ ] #15 INF-02 · Terraform AKS module (dev)
   - [ ] #16 INF-03 · Event Grid + Topic
   - [ ] #17 INF-04 · Azure OpenAI (private endpoint)
   - [ ] #18 INF-05 · Key Vault + Workload Identity
+
+### AKS hardening follow-up after PR #40
+- Priority: P1
+- Short summary: Turn the deferred code-scanning findings from the AKS skeleton PR into explicit follow-up work, so the module can harden gradually without blocking the first reusable baseline.
+- Estimated effort: 2-4 days
+- Dependencies: PR `#40` merged, first dev-cluster scope agreed, networking and cost posture clarified
+- Tasks:
+  - [ ] Add AKS upgrade-channel input and choose a sane default
+  - [ ] Decide whether the first dev AKS deployment requires a private cluster and API server authorized IP ranges
+  - [ ] Decide the AKS networking baseline: Azure CNI and network policy
+  - [ ] Add Secrets Store CSI auto-rotation when Key Vault integration is introduced
+  - [ ] Revisit paid SKU, ephemeral OS disk, disk encryption set, and node-pool taints after the first real cluster shape is chosen
 
 ### Cluster policy and runtime guardrails
 - Priority: P1
@@ -41,11 +54,12 @@ This file is a grouped planning view of the current open issues. Some open issue
 
 ### CI baseline, image pipeline, and scan gates
 - Priority: P0
-- Short summary: Turn the current Terraform-focused workflows into a full delivery baseline for build, scan, publish, and registry security.
+- Short summary: Turn the current Terraform-focused workflows into a full delivery baseline for build, scan, publish, and registry security. Keep the workflow fixes in PR `#41` separate from the AKS module work.
 - Estimated effort: 3-5 days
 - Dependencies: container build inputs, ACR design, app image naming/versioning strategy
 - Tasks:
   - [ ] #2 Add Ci&CD to the repo
+  - [ ] Review and merge PR #41 for Terraform workflow scope and reliability improvements
   - [ ] #31 CI-01 · Build & push images to ACR
   - [ ] #8 Secure ACR Images when they are available
   - [ ] #28 SEC-01 · Trivy image + IaC scan gate
