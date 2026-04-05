@@ -1,10 +1,17 @@
+# Example only: keep disabled until a later ticket wires the AKS module into a non-bootstrap root.
 # module "aks" {
 #   source              = "../../modules/aks"
 #   cluster_name        = "aks-dev-guard"
-#   k8s_version         = "1.29"
+#   resource_group_name = azurerm_resource_group.state.name
+#   location            = var.location
+#   dns_prefix          = "aks-dev-guard"
+#   kubernetes_version  = "1.29"
 #   node_count          = 1
-#   enable_keda         = true
-#   tags                = local.tags
+#   node_vm_size              = "Standard_D2_v2"
+#   log_analytics_workspace_id = azurerm_log_analytics_workspace.logs.id
+#   tags = {
+#     environment = "dev"
+#   }
 # }
 
 resource "azurerm_resource_group" "state" {
@@ -17,7 +24,7 @@ resource "azurerm_storage_account" "state" {
   # checkov:skip=CKV_AZURE_206: LRS kept intentionally for budget-friendly dev state
   # checkov:skip=CKV_AZURE_59: public network kept on so GH Actions can reach state backend
   # checkov:skip=CKV2_AZURE_33: private endpoint deferred for dev to avoid VNet/DNS cost/complexity
-  # checkov:skip=CKV_AZURE_33: using Azure Monitor diagnostics instead of legacy queue logging
+  # checkov:skip=CKV_AZURE_33: queue-service logging is deferred because this dev state bootstrap uses Azure Monitor diagnostics instead of legacy storage logging
   name                            = var.state_sa_name # 3–24 lower-case
   resource_group_name             = azurerm_resource_group.state.name
   location                        = azurerm_resource_group.state.location
@@ -85,7 +92,7 @@ resource "azurerm_monitor_diagnostic_setting" "state_logs" {
 
 
 resource "azurerm_storage_container" "tfstate" {
-  # checkov:skip=CKV2_AZURE_21: for now skip logging for Blob service to avoid extra cost in dev
+  # checkov:skip=CKV2_AZURE_21: blob-service logging is deferred for dev because the tfstate container is already private and the account-level diagnostics cover the baseline telemetry we keep here
   name               = "tfstate"
   storage_account_id = azurerm_storage_account.state.id
 }
