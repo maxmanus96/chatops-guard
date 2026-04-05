@@ -1,6 +1,6 @@
 # TODO
 
-Source: 32 open GitHub issues in `maxmanus96/chatops-guard` as retrieved via GitHub MCP on 2026-03-22.
+Source: open GitHub issues in `maxmanus96/chatops-guard` as retrieved via GitHub MCP on 2026-03-27. Issue `#1` is actively in progress in draft PR `#40` and validated locally.
 
 This file is a grouped planning view of the current open issues. Some open issues are umbrella or backlog-management issues, so they are represented as planning or cleanup tasks where appropriate rather than duplicated as standalone implementation work.
 
@@ -19,11 +19,11 @@ This file is a grouped planning view of the current open issues. Some open issue
 
 ### AKS and platform services baseline
 - Priority: P1
-- Short summary: Move from state-bootstrap-only Terraform toward the first real platform components needed to host the application.
+- Short summary: Move from state-bootstrap-only Terraform toward the first real platform components needed to host the application. Issue `#1` is already in progress in draft PR `#40`.
 - Estimated effort: 4-7 days
 - Dependencies: final Terraform module structure, target Azure region and sizing, environment promotion plan
 - Tasks:
-  - [ ] #1 Define minimal AKS module
+  - [ ] #1 Define minimal AKS module (active in draft PR #40)
   - [ ] #15 INF-02 · Terraform AKS module (dev)
   - [ ] #16 INF-03 · Event Grid + Topic
   - [ ] #17 INF-04 · Azure OpenAI (private endpoint)

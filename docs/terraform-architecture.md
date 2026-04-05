@@ -13,7 +13,7 @@ The repository already has a live `dev` Terraform layout under `infra/envs/dev` 
 - `infra/envs/dev` is the active Terraform root.
 - `infra/envs/dev` currently manages remote-state bootstrap resources.
 - `infra/envs/prod` exists as a placeholder.
-- `infra/modules/` does not yet hold reusable modules.
+- `infra/modules/` now holds the first reusable module skeleton at `infra/modules/aks`, tracked in issue `#1` and draft PR `#40`.
 
 ## Decision
 
@@ -68,6 +68,6 @@ Until a migration is planned, treat the current `infra/envs/dev` directory as th
 
 ## First safe next step
 
-Create the first reusable module under `infra/modules/aks` without changing the current `dev` backend/bootstrap layout.
+Continue evolving the first reusable module under `infra/modules/aks` without changing the current `dev` backend/bootstrap layout.
 
 That gives the project a forward path toward reusable infrastructure while keeping the already-applied `dev` state stable.

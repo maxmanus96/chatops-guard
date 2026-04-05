@@ -1,12 +1,14 @@
 # ChatOps Guard
 
-A security and monitoring tool for ChatOps environments that helps protect and control chat-based operations.
+A cloud and DevOps portfolio project for ChatOps Guard. The repo is infrastructure-first today: Terraform bootstrap is live in `infra/envs/dev`, while most application code remains roadmap material.
 
 ## Overview
 
 ChatOps Guard is designed to provide security, monitoring, and access control for ChatOps (Chat Operations) workflows. It helps organizations safely implement chat-based automation by providing guardrails and security measures for bot interactions and automated processes.
 
 ## Architecture
+
+The diagram below is the target architecture, not the fully implemented state.
 
 ```mermaid
 graph TB
@@ -109,7 +111,8 @@ Configuration details and examples will be documented as features are implemente
 
 ## Infrastructure & Security Notes
 
-- Terraform lives under `infra/envs/<env>` and currently provisions only the `dev` remote-state resources (storage account, container, resource group). Production definitions exist but remain dormant until explicitly enabled via GitHub Actions `TF_TARGET_ENVS`.
+- Terraform lives under `infra/envs/<env>`. `infra/envs/dev` is the active environment and already provisions the remote-state resources that back Terraform operations. Production definitions exist but remain dormant until explicitly enabled via GitHub Actions `TF_TARGET_ENVS`.
+- The first reusable platform module, `infra/modules/aks`, is in progress on issue `#1` and tracked in draft PR `#40`.
 - GitHub Actions workflow `.github/workflows/tf-plan-apply.yaml` uses a matrix to run `plan/apply` per environment while scoping Terraform commands to `infra/envs/<env>` so prod is untouched unless opted in.
 - Security posture for the dev state storage account balances CI access with cost:
   - Public network access stays enabled so GitHub Actions can reach the backend; blob/anonymous access is disabled and shared keys are off (Azure AD auth only), but the endpoint remains reachable publicly.

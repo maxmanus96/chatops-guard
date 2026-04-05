@@ -1,7 +1,7 @@
 # Infra & Workflow Plan
 
 ## Terraform Environments
-- `infra/envs/dev`: provisions the remote-state RG/storage/container that back all Terraform operations. Hardened for public access, logging, and Azure AD auth; remains cost-optimized (LRS, no CMK/private endpoints).
+- `infra/envs/dev`: the live, already planned/applied remote-state RG/storage/container that backs all Terraform operations. Hardened for public access, logging, and Azure AD auth; remains cost-optimized (LRS, no CMK/private endpoints).
 - `infra/envs/prod`: placeholder; backend/provider files exist but no resources are created until the environment is explicitly enabled via CI (`TF_TARGET_ENVS`).
 
 ## CI/CD Flow
@@ -36,7 +36,7 @@
 ### Recommendation
 - Merge the first infra PR if checks are green and there are no unresolved review comments.
 - Continue the next ticket from a clean mainline instead of stacking more infra work on the same PR.
-- If the next ticket is Terraform AKS, work on the module skeleton only. Do not apply a dev AKS cluster yet.
+- If the next ticket is Terraform AKS, continue issue `#1` in the existing draft PR `#40`. The module skeleton is already in progress and validated locally; do not apply a dev AKS cluster yet.
 - Treat `#2`, `#5`, and `#13` as umbrella or cleanup issues; do not let them outrank the more concrete scoped issues.
 
 ### Highest ROI / lowest direct cloud cost
@@ -62,6 +62,6 @@
 ## Suggested Sequence
 1. Merge the current green infra PR.
 2. Finish architecture/bootstrap follow-up work and reconcile legacy umbrella issues.
-3. Create `infra/modules/aks` as a module skeleton only, without applying AKS in dev.
+3. Finish and merge the current AKS module work (`#1` / draft PR `#40`) before wiring any environment root or applying AKS in dev.
 4. Tighten docs and quick-start guidance so the repo is easier to evaluate and continue from.
 5. Then return to CI/CD and the smallest application skeleton work.
