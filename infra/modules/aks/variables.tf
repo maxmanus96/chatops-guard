@@ -82,6 +82,34 @@ variable "sku_tier" {
   }
 }
 
+variable "private_cluster_enabled" {
+  description = "Whether the AKS API server should only be exposed on private IP addresses."
+  type        = bool
+  default     = false
+}
+
+variable "automatic_upgrade_channel" {
+  description = "AKS automatic upgrade channel. For this demo path, patch is the safest default because it stays on the same minor version while still taking patch releases."
+  type        = string
+  default     = "patch"
+
+  validation {
+    condition     = contains(["patch", "stable", "rapid", "node-image", "none"], var.automatic_upgrade_channel)
+    error_message = "automatic_upgrade_channel must be one of: patch, stable, rapid, node-image, none."
+  }
+}
+
+variable "api_server_authorized_ip_ranges" {
+  description = "Optional set of public IP ranges allowed to reach the AKS API server."
+  type        = set(string)
+  default     = []
+
+  validation {
+    condition     = alltrue([for cidr in var.api_server_authorized_ip_ranges : trimspace(cidr) != ""])
+    error_message = "api_server_authorized_ip_ranges must not contain empty values."
+  }
+}
+
 variable "log_analytics_workspace_id" {
   description = "Resource ID of the Log Analytics workspace used for AKS monitoring."
   type        = string

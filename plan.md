@@ -26,17 +26,17 @@
 | Geo-redundant replication | ⏳ | LRS kept for budget; document justification in code comment. |
 
 ## Next Steps
-1. Mark PR `#40` ready, merge the green AKS module skeleton, and keep AKS disabled in `infra/envs/dev` until environment wiring is explicitly planned.
-2. Merge PR `#41` next so Terraform workflow scope and validation stay aligned with the real repo layout.
-3. Turn the deferred AKS hardening items from PR `#40` into follow-up implementation slices: upgrade channel, API server access model, networking baseline, and Secrets Store CSI rotation.
+1. Merge the green AKS module skeleton in PR `#40` and keep AKS disabled in `infra/envs/dev` until environment wiring is explicitly planned.
+2. Review PR `#41` next and merge it if the workflow behavior in GitHub matches the intended Terraform scope and validation flow.
+3. Turn the deferred AKS hardening items from PR `#40` into follow-up implementation slices, starting with a demo-friendly public API plus authorized IP ranges before revisiting private cluster access.
 4. Decide when to enable prod in CI by setting `TF_TARGET_ENVS` repo variable (e.g., `["dev","prod"]`), once prod resources are defined.
 5. If Log Analytics cost is high in dev, consider lowering retention, switching diagnostics to a storage account, or making diagnostics optional per environment.
 
 ## ROI Priority Order (2026-04-06)
 
 ### Recommendation
-- Mark PR `#40` ready and merge it from the current green state.
-- Merge PR `#41` next so the Terraform workflow behavior stays aligned with the repo's actual roots.
+- Merge PR `#40` from its current green, non-draft state.
+- Review PR `#41` next so the Terraform workflow behavior stays aligned with the repo's actual roots, then merge it if the GitHub runs look correct.
 - Continue issue `#1` after merge as small hardening slices only; do not apply a dev AKS cluster yet.
 - Treat `#2`, `#5`, and `#13` as umbrella or cleanup issues; do not let them outrank the more concrete scoped issues.
 
@@ -61,8 +61,8 @@
    - `#23`, `#25`, `#26`, `#37`
 
 ## Suggested Sequence
-1. Mark PR `#40` ready and merge the current green AKS module PR.
-2. Merge PR `#41` so CI stays fast, scoped, and predictable for the next tickets.
-3. Convert the deferred AKS code-scanning findings into small follow-up tickets before wiring any environment root or applying AKS in dev.
+1. Merge the current green AKS module PR `#40`.
+2. Review PR `#41` in GitHub and merge it if CI behavior looks correct and predictable.
+3. Continue the next AKS hardening slices in issue `#15`, starting with authorized IP ranges and an explicit upgrade channel.
 4. Tighten docs and quick-start guidance so the repo is easier to evaluate and continue from.
 5. Then return to the next highest-ROI CI/CD and application skeleton work.

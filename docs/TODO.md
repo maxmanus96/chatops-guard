@@ -1,6 +1,6 @@
 # TODO
 
-Source: open GitHub issues in `maxmanus96/chatops-guard` as retrieved via GitHub MCP on 2026-03-27. Issue `#1` is active in PR `#40`, and the latest branch update is green and ready for review.
+Source: open GitHub issues in `maxmanus96/chatops-guard` as retrieved via GitHub MCP on 2026-03-27. Issue `#1` is active in PR `#40`, and the PR is green and open for merge.
 
 This file is a grouped planning view of the current open issues. Some open issues are umbrella or backlog-management issues, so they are represented as planning or cleanup tasks where appropriate rather than duplicated as standalone implementation work.
 
@@ -23,7 +23,7 @@ This file is a grouped planning view of the current open issues. Some open issue
 - Estimated effort: 4-7 days
 - Dependencies: final Terraform module structure, target Azure region and sizing, environment promotion plan
 - Tasks:
-  - [ ] #1 Define minimal AKS module (PR #40 is green and ready for review)
+  - [ ] #1 Define minimal AKS module (PR #40 is green and open for merge)
   - [ ] Merge PR #40 and keep AKS disabled in `infra/envs/dev` until environment wiring is explicitly planned
   - [ ] #15 INF-02 · Terraform AKS module (dev)
   - [ ] #16 INF-03 · Event Grid + Topic
@@ -36,8 +36,9 @@ This file is a grouped planning view of the current open issues. Some open issue
 - Estimated effort: 2-4 days
 - Dependencies: PR `#40` merged, first dev-cluster scope agreed, networking and cost posture clarified
 - Tasks:
-  - [ ] Add AKS upgrade-channel input and choose a sane default
-  - [ ] Decide whether the first dev AKS deployment requires a private cluster and API server authorized IP ranges
+  - [ ] Add AKS upgrade-channel input with `patch` as the demo-safe default
+  - [ ] For the first demo `dev` cluster, keep a public API server and restrict it with authorized IP ranges
+  - [ ] Revisit private cluster after a VNet-connected admin or runner path exists
   - [ ] Decide the AKS networking baseline: Azure CNI and network policy
   - [ ] Add Secrets Store CSI auto-rotation when Key Vault integration is introduced
   - [ ] Revisit paid SKU, ephemeral OS disk, disk encryption set, and node-pool taints after the first real cluster shape is chosen
@@ -59,7 +60,7 @@ This file is a grouped planning view of the current open issues. Some open issue
 - Dependencies: container build inputs, ACR design, app image naming/versioning strategy
 - Tasks:
   - [ ] #2 Add Ci&CD to the repo
-  - [ ] Review and merge PR #41 for Terraform workflow scope and reliability improvements
+  - [ ] Review PR #41 and merge it if the workflow behavior looks correct in GitHub
   - [ ] #31 CI-01 · Build & push images to ACR
   - [ ] #8 Secure ACR Images when they are available
   - [ ] #28 SEC-01 · Trivy image + IaC scan gate

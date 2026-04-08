@@ -7,7 +7,12 @@
 #   dns_prefix          = "aks-dev-guard"
 #   kubernetes_version  = "1.29"
 #   node_count          = 1
-#   node_vm_size              = "Standard_D2_v2"
+#   node_vm_size        = "Standard_D2_v2"
+#   private_cluster_enabled = false
+#   automatic_upgrade_channel = "patch"
+#   api_server_authorized_ip_ranges = [
+#     "203.0.113.10/32", # replace with your stable public IP for demo access
+#   ]
 #   log_analytics_workspace_id = azurerm_log_analytics_workspace.logs.id
 #   tags = {
 #     environment = "dev"
