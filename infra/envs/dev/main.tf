@@ -10,6 +10,10 @@
 #   node_vm_size        = "Standard_D2_v2"
 #   private_cluster_enabled = false
 #   automatic_upgrade_channel = "patch"
+#   network_plugin               = "azure"
+#   network_plugin_mode          = "overlay"
+#   network_policy               = "cilium"
+#   network_data_plane           = "cilium"
 #   api_server_authorized_ip_ranges = [
 #     "203.0.113.10/32", # replace with your stable public IP for demo access
 #   ]

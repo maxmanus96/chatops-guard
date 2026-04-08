@@ -27,8 +27,8 @@
 
 ## Next Steps
 1. Merge the green AKS module skeleton in PR `#40` and keep AKS disabled in `infra/envs/dev` until environment wiring is explicitly planned.
-2. Review PR `#41` next and merge it if the workflow behavior in GitHub matches the intended Terraform scope and validation flow.
-3. Turn the deferred AKS hardening items from PR `#40` into follow-up implementation slices, starting with a demo-friendly public API plus authorized IP ranges before revisiting private cluster access.
+2. Fix the PR `#41` SARIF upload failure, then merge it once the workflow behavior in GitHub matches the intended Terraform scope and validation flow.
+3. Continue issue `#15` as small AKS hardening slices, now with an explicit Azure CNI Overlay + Cilium baseline before deciding subnet wiring or any real cluster apply.
 4. Decide when to enable prod in CI by setting `TF_TARGET_ENVS` repo variable (e.g., `["dev","prod"]`), once prod resources are defined.
 5. If Log Analytics cost is high in dev, consider lowering retention, switching diagnostics to a storage account, or making diagnostics optional per environment.
 
@@ -36,8 +36,8 @@
 
 ### Recommendation
 - Merge PR `#40` from its current green, non-draft state.
-- Review PR `#41` next so the Terraform workflow behavior stays aligned with the repo's actual roots, then merge it if the GitHub runs look correct.
-- Continue issue `#1` after merge as small hardening slices only; do not apply a dev AKS cluster yet.
+- Fix PR `#41` next so the Terraform workflow behavior stays aligned with the repo's actual roots, then merge it once the SARIF path is green in GitHub.
+- Continue issue `#15` after PR `#40` as small hardening slices only; do not apply a dev AKS cluster yet.
 - Treat `#2`, `#5`, and `#13` as umbrella or cleanup issues; do not let them outrank the more concrete scoped issues.
 
 ### Highest ROI / lowest direct cloud cost
@@ -62,7 +62,7 @@
 
 ## Suggested Sequence
 1. Merge the current green AKS module PR `#40`.
-2. Review PR `#41` in GitHub and merge it if CI behavior looks correct and predictable.
-3. Continue the next AKS hardening slices in issue `#15`, starting with authorized IP ranges and an explicit upgrade channel.
+2. Fix PR `#41` in GitHub, then merge it once the SARIF upload path is behaving predictably.
+3. Continue the next AKS hardening slices in issue `#15`, now with an explicit Azure CNI Overlay + Cilium baseline before any real environment wiring.
 4. Tighten docs and quick-start guidance so the repo is easier to evaluate and continue from.
 5. Then return to the next highest-ROI CI/CD and application skeleton work.

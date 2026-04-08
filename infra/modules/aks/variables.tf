@@ -99,6 +99,50 @@ variable "automatic_upgrade_channel" {
   }
 }
 
+variable "network_plugin" {
+  description = "AKS network plugin. For this repo, Azure CNI is the intended baseline because it supports overlay mode and the later Cilium path."
+  type        = string
+  default     = "azure"
+
+  validation {
+    condition     = trimspace(var.network_plugin) != ""
+    error_message = "network_plugin must not be empty."
+  }
+}
+
+variable "network_plugin_mode" {
+  description = "Optional AKS network plugin mode. Overlay is the intended demo baseline because it avoids early subnet IP pressure while keeping the cluster on Azure CNI."
+  type        = string
+  default     = "overlay"
+
+  validation {
+    condition     = trimspace(var.network_plugin_mode) != ""
+    error_message = "network_plugin_mode must not be empty."
+  }
+}
+
+variable "network_policy" {
+  description = "AKS network policy engine. Cilium is the intended default for the first real cluster path."
+  type        = string
+  default     = "cilium"
+
+  validation {
+    condition     = trimspace(var.network_policy) != ""
+    error_message = "network_policy must not be empty."
+  }
+}
+
+variable "network_data_plane" {
+  description = "AKS network data plane. Cilium is the intended default for this repo's learning path."
+  type        = string
+  default     = "cilium"
+
+  validation {
+    condition     = trimspace(var.network_data_plane) != ""
+    error_message = "network_data_plane must not be empty."
+  }
+}
+
 variable "api_server_authorized_ip_ranges" {
   description = "Optional set of public IP ranges allowed to reach the AKS API server."
   type        = set(string)

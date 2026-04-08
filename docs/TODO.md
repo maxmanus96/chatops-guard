@@ -36,10 +36,11 @@ This file is a grouped planning view of the current open issues. Some open issue
 - Estimated effort: 2-4 days
 - Dependencies: PR `#40` merged, first dev-cluster scope agreed, networking and cost posture clarified
 - Tasks:
-  - [ ] Add AKS upgrade-channel input with `patch` as the demo-safe default
-  - [ ] For the first demo `dev` cluster, keep a public API server and restrict it with authorized IP ranges
+  - [x] Add AKS upgrade-channel input with `patch` as the demo-safe default
+  - [x] For the first demo `dev` cluster, keep a public API server and restrict it with authorized IP ranges
+  - [x] Make the networking baseline explicit with Azure CNI Overlay + Cilium defaults
   - [ ] Revisit private cluster after a VNet-connected admin or runner path exists
-  - [ ] Decide the AKS networking baseline: Azure CNI and network policy
+  - [ ] Decide subnet and egress shape before any real `dev` AKS apply
   - [ ] Add Secrets Store CSI auto-rotation when Key Vault integration is introduced
   - [ ] Revisit paid SKU, ephemeral OS disk, disk encryption set, and node-pool taints after the first real cluster shape is chosen
 
@@ -60,7 +61,7 @@ This file is a grouped planning view of the current open issues. Some open issue
 - Dependencies: container build inputs, ACR design, app image naming/versioning strategy
 - Tasks:
   - [ ] #2 Add Ci&CD to the repo
-  - [ ] Review PR #41 and merge it if the workflow behavior looks correct in GitHub
+  - [ ] Fix the PR #41 SARIF upload failure, then merge it once the workflow behavior looks correct in GitHub
   - [ ] #31 CI-01 · Build & push images to ACR
   - [ ] #8 Secure ACR Images when they are available
   - [ ] #28 SEC-01 · Trivy image + IaC scan gate

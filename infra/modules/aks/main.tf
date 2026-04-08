@@ -28,6 +28,14 @@ resource "azurerm_kubernetes_cluster" "this" {
     max_pods   = 50
   }
 
+  network_profile {
+    network_plugin      = var.network_plugin
+    network_plugin_mode = var.network_plugin_mode
+    network_policy      = var.network_policy
+    network_data_plane  = var.network_data_plane
+    load_balancer_sku   = "standard"
+  }
+
   oms_agent {
     log_analytics_workspace_id      = var.log_analytics_workspace_id
     msi_auth_for_monitoring_enabled = true

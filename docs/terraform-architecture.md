@@ -13,7 +13,8 @@ The repository already has a live `dev` Terraform layout under `infra/envs/dev` 
 - `infra/envs/dev` is the active Terraform root.
 - `infra/envs/dev` currently manages remote-state bootstrap resources.
 - `infra/envs/prod` exists as a placeholder.
-- `infra/modules/` now holds the first reusable module skeleton at `infra/modules/aks`, tracked in issue `#1` and draft PR `#40`.
+- `infra/modules/` now holds the first reusable module at `infra/modules/aks`, tracked in issue `#1` and PR `#40`.
+- The AKS module currently exposes a small but explicit baseline for monitoring, API access restrictions, upgrade channel, and Azure CNI Overlay + Cilium networking.
 
 ## Decision
 
