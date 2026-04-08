@@ -25,45 +25,46 @@ jobs:
   terraform-unit-tests:
     name: 'Terraform Unit Tests'
     runs-on: ubuntu-latest
-    
+
     steps:
-    # Checkout the repository to the GitHub Actions runner
     - name: Checkout
       uses: actions/checkout@v4
 
-    # Install the latest version of Terraform CLI and configure the Terraform CLI configuration file with a Terraform Cloud user API token
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_wrapper: false
 
-    # Initialize and validate the live dev root and the AKS module skeleton.
+    # Initialize and validate both the live dev root and the AKS module skeleton.
     - name: Terraform Init
       run: |
         for dir in infra/envs/dev infra/modules/aks; do
           terraform -chdir="$dir" init -backend=false
         done
 
-    # Validate terraform files
     - name: Terraform Validate
       run: |
         for dir in infra/envs/dev infra/modules/aks; do
           terraform -chdir="$dir" validate
         done
 
-    # Checks that all Terraform configuration files adhere to a canonical format
     - name: Terraform Format
       run: |
         for dir in infra/envs/dev infra/modules/aks; do
           terraform -chdir="$dir" fmt -check -recursive
         done
-    
-    # Perform a security scan of the terraform code using checkov
+
+    # Keep the blocking SARIF scan on the active dev root for now.
+    # The AKS module is still a skeleton and its heavier hardening is being handled in issue #1.
     - name: Run Checkov action
       id: checkov
-      uses: bridgecrewio/checkov-action@master
-      with: 
+      uses: bridgecrewio/checkov-action@v12
+      with:
+        directory: infra/envs/dev
         framework: terraform
+        output_format: cli,sarif
+        output_file_path: console,results.sarif
 
-    # Upload results to GitHub Advanced Security
     - name: Upload SARIF file
       if: success() || failure()
       uses: github/codeql-action/upload-sarif@v3

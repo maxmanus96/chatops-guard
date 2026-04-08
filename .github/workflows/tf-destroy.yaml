@@ -1,0 +1,91 @@
+name: 'Terraform Destroy'
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Terraform environment root to destroy'
+        required: true
+        type: choice
+        options:
+          - dev
+          - prod
+        default: dev
+      confirm_destroy:
+        description: 'Type destroy-<environment> to confirm'
+        required: true
+        type: string
+      reason:
+        description: 'Why are you destroying this environment?'
+        required: false
+        type: string
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: tf-destroy-${{ inputs.environment }}
+  cancel-in-progress: false
+
+env:
+  TF_IN_AUTOMATION: '1'
+  ARM_USE_OIDC: 'true'
+  ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+  ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+
+jobs:
+  terraform-destroy:
+    name: 'Terraform Destroy (${{ inputs.environment }})'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment: ${{ inputs.environment == 'prod' && 'production' || 'development' }}
+    env:
+      TF_ENV_DIR: infra/envs/${{ inputs.environment }}
+
+    steps:
+    - name: Ref Safety Check
+      run: |
+        if [ "${{ github.ref }}" != 'refs/heads/main' ]; then
+          echo 'Run Terraform destroy only from the main branch workflow context.'
+          exit 1
+        fi
+
+    - name: Confirmation Guard
+      run: |
+        EXPECTED="destroy-${{ inputs.environment }}"
+        if [ "${{ inputs.confirm_destroy }}" != "$EXPECTED" ]; then
+          echo "Confirmation failed. Expected: $EXPECTED"
+          exit 1
+        fi
+
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Azure OIDC Login
+      uses: azure/login@v2
+      with:
+        client-id: ${{ secrets.AZURE_CLIENT_ID }}
+        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_wrapper: false
+
+    - name: Terraform Init
+      run: terraform -chdir=${{ env.TF_ENV_DIR }} init -input=false
+
+    - name: Terraform Destroy Plan
+      run: terraform -chdir=${{ env.TF_ENV_DIR }} plan -destroy -no-color -input=false -out=tfdestroyplan
+
+    - name: Publish Destroy Summary
+      run: |
+        echo "## Terraform Destroy Request (${{ inputs.environment }})" >> $GITHUB_STEP_SUMMARY
+        echo "Reason: ${{ inputs.reason || 'not provided' }}" >> $GITHUB_STEP_SUMMARY
+        terraform -chdir=${{ env.TF_ENV_DIR }} show -no-color tfdestroyplan >> $GITHUB_STEP_SUMMARY
+
+    - name: Terraform Destroy Apply
+      run: terraform -chdir=${{ env.TF_ENV_DIR }} apply -auto-approve tfdestroyplan
