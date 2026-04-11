@@ -8,12 +8,14 @@
 #   kubernetes_version  = "1.29"
 #   node_count          = 1
 #   node_vm_size        = "Standard_D2_v2"
+#   vnet_subnet_id      = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-chatops-guard-network-dev/providers/Microsoft.Network/virtualNetworks/vnet-chatops-guard-dev/subnets/snet-aks-nodes" # recommend a dedicated /24 node subnet for the first dev cluster
 #   private_cluster_enabled = false
 #   automatic_upgrade_channel = "patch"
 #   network_plugin               = "azure"
 #   network_plugin_mode          = "overlay"
 #   network_policy               = "cilium"
 #   network_data_plane           = "cilium"
+#   outbound_type                = "loadBalancer" # cheapest demo baseline; revisit NAT Gateway later if you need tighter egress control
 #   api_server_authorized_ip_ranges = [
 #     "203.0.113.10/32", # replace with your stable public IP for demo access
 #   ]

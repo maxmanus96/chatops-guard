@@ -60,6 +60,62 @@ Until a migration is planned, treat the current `infra/envs/dev` directory as th
 3. Introduce thin environment roots for platform resources step by step.
 4. Only move bootstrap/state code later if there is an explicit backend/state migration plan.
 
+## AKS Dev Networking Note
+
+For the first real `dev` AKS cluster, prefer this network shape:
+
+- use a dedicated node subnet such as `snet-aks-nodes` instead of sharing a general-purpose subnet
+- start with `/24` as the node subnet size to leave headroom for node growth, upgrade surge, and internal load balancer IP use
+- keep `outbound_type = "loadBalancer"` for the first demo cluster because it is the cheapest and simplest egress path
+- revisit NAT Gateway later if the project needs a more controlled or more stable shared outbound IP posture
+
+Why this fits the current repo:
+
+- Azure CNI Overlay means node subnet sizing is mostly about node IPs, not pod IPs
+- the repo is still in a demo-safe, cost-aware stage
+- private cluster and tighter egress controls are better introduced after there is a VNet-connected admin or runner path
+
+### Concrete Dev Example
+
+Use this as the first real `dev` shape once AKS is actually wired into a non-bootstrap environment root:
+
+```text
+vnet-chatops-guard-dev      10.30.0.0/16
+└── snet-aks-nodes          10.30.0.0/24
+    ├── AKS node-1          10.30.0.4
+    ├── AKS node-2          10.30.0.5
+    └── AKS internal LB IPs 10.30.0.x
+
+AKS API server:
+- public endpoint for the first demo cluster
+- restricted with api_server_authorized_ip_ranges
+
+AKS pod networking:
+- Azure CNI Overlay
+- pod IPs come from the overlay address space, not from 10.30.0.0/24
+
+Cluster egress:
+- outbound_type = "loadBalancer"
+- AKS manages the standard load balancer egress path
+```
+
+Why this concrete example is safe:
+
+- `/24` is generous enough for a small dev cluster, upgrade surge, and internal load balancer IPs without being excessive for a portfolio demo
+- a dedicated node subnet avoids mixing AKS nodes with unrelated resources
+- `loadBalancer` keeps cost and operational complexity lower than introducing NAT Gateway immediately
+
+### Alternatives Considered
+
+- smaller node subnet such as `/26`:
+  cheaper in IP space, but easier to outgrow during upgrades or later node-pool expansion
+- larger node subnet such as `/23`:
+  more headroom, but unnecessary for the current demo-sized target
+- `managedNATGateway` egress:
+  stronger and more stable outbound IP control, but adds recurring cost and another Azure network dependency
+- `userAssignedNATGateway` or `userDefinedRouting`:
+  more control, but better saved for a later hardening phase when the VNet and firewall story are real
+
 ## What not to do yet
 
 - Do not rename `infra/envs/dev`.

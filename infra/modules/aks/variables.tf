@@ -71,6 +71,17 @@ variable "node_vm_size" {
   }
 }
 
+variable "vnet_subnet_id" {
+  description = "Optional subnet ID for the AKS node pool. Leave null while the module stays skeleton-only; set it before any real Azure CNI deployment."
+  type        = string
+  default     = null
+
+  validation {
+    condition     = var.vnet_subnet_id == null || trimspace(var.vnet_subnet_id) != ""
+    error_message = "vnet_subnet_id must be null or a non-empty subnet resource ID."
+  }
+}
+
 variable "sku_tier" {
   description = "AKS control plane SKU tier."
   type        = string
@@ -140,6 +151,17 @@ variable "network_data_plane" {
   validation {
     condition     = trimspace(var.network_data_plane) != ""
     error_message = "network_data_plane must not be empty."
+  }
+}
+
+variable "outbound_type" {
+  description = "AKS egress mode. loadBalancer is the cheapest and simplest demo baseline; stronger or more controlled egress can be introduced later with NAT gateway or user-defined routing."
+  type        = string
+  default     = "loadBalancer"
+
+  validation {
+    condition     = contains(["loadBalancer", "managedNATGateway", "userAssignedNATGateway", "userDefinedRouting", "none"], var.outbound_type)
+    error_message = "outbound_type must be one of: loadBalancer, managedNATGateway, userAssignedNATGateway, userDefinedRouting, none."
   }
 }
 

@@ -40,9 +40,10 @@ This file is a grouped planning view of the current open issues. Some open issue
   - [x] For the first demo `dev` cluster, keep a public API server and restrict it with authorized IP ranges
   - [x] Make the networking baseline explicit with Azure CNI Overlay + Cilium defaults
   - [ ] Revisit private cluster after a VNet-connected admin or runner path exists
-  - [ ] Decide subnet and egress shape before any real `dev` AKS apply
+  - [ ] Create a dedicated dev AKS node subnet, with `/24` as the recommended starting shape, and keep `outbound_type = "loadBalancer"` for the first demo cluster
   - [ ] Add Secrets Store CSI auto-rotation when Key Vault integration is introduced
-  - [ ] Revisit paid SKU, ephemeral OS disk, disk encryption set, and node-pool taints after the first real cluster shape is chosen
+  - [ ] Revisit paid SKU, ephemeral OS disk, host encryption, disk encryption set, and node-pool separation after the first real cluster shape is chosen
+  - [ ] Retire the temporary AKS Checkov skips as each hardening slice becomes real
 
 ### Cluster policy and runtime guardrails
 - Priority: P1
