@@ -32,6 +32,7 @@ jobs:
     env:
       #this is needed since we are running terraform with read-only permissions
       ARM_SKIP_PROVIDER_REGISTRATION: true
+      TF_ENV_DIR: infra/envs/dev
     outputs:
       tfplanExitCode: ${{ steps.tf-plan.outputs.exitcode }}
 
@@ -48,7 +49,7 @@ jobs:
 
     # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
     - name: Terraform Init
-      run: terraform init
+      run: terraform -chdir=${{ env.TF_ENV_DIR }} init -input=false
 
     # Generates an execution plan for Terraform
     # An exit code of 0 indicated no changes, 1 a terraform failure, 2 there are pending changes.
@@ -56,7 +57,7 @@ jobs:
       id: tf-plan
       run: |
         export exitcode=0
-        terraform plan -detailed-exitcode -no-color -out tfplan || export exitcode=$?
+        terraform -chdir=${{ env.TF_ENV_DIR }} plan -detailed-exitcode -no-color -input=false -out tfplan || export exitcode=$?
         
         echo "exitcode=$exitcode" >> $GITHUB_OUTPUT
         
@@ -72,13 +73,13 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: tfplan
-        path: tfplan
+        path: ${{ env.TF_ENV_DIR }}/tfplan
         
     # Create string output of Terraform Plan
     - name: Create String Output
       id: tf-plan-string
       run: |
-        TERRAFORM_PLAN=$(terraform show -no-color tfplan)
+        TERRAFORM_PLAN=$(terraform -chdir=${{ env.TF_ENV_DIR }} show -no-color tfplan)
         
         delimiter="$(openssl rand -hex 8)"
         echo "summary<<${delimiter}" >> $GITHUB_OUTPUT
@@ -116,14 +117,12 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               state: 'open',
-              creator: creator,
-              title: title
+              creator: creator
             })
               
-            if( issues.data.length > 0 ) {
-              // We assume there shouldn't be more than 1 open issue, since we update any issue we find
-              const issue = issues.data[0]
-              
+            const issue = issues.data.find((candidate) => candidate.title === title)
+
+            if (issue) {
               if ( issue.body == body ) {
                 console.log('Drift Detected: Found matching issue with duplicate content')
               } else {
@@ -161,13 +160,12 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               state: 'open',
-              creator: creator,
-              title: title
+              creator: creator
             })
               
-            if( issues.data.length > 0 ) {
-              const issue = issues.data[0]
-              
+            const issue = issues.data.find((candidate) => candidate.title === title)
+
+            if (issue) {
               github.rest.issues.update({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
