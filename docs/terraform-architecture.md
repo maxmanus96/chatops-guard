@@ -11,9 +11,9 @@ The repository already has a live `dev` Terraform layout under `infra/envs/dev` 
 ## Current state
 
 - `infra/envs/dev` is the active Terraform root.
-- `infra/envs/dev` currently manages remote-state bootstrap resources.
+- `infra/envs/dev` currently manages remote-state bootstrap resources and now successfully plans/applies again after the bootstrap resources were imported into state and the storage diagnostics scope was corrected.
 - `infra/envs/prod` exists as a placeholder.
-- `infra/modules/` does not yet hold reusable modules.
+- `infra/modules/aks` now exists as the first reusable module, but it is not wired into a non-bootstrap environment root yet.
 
 ## Decision
 
@@ -66,8 +66,8 @@ Until a migration is planned, treat the current `infra/envs/dev` directory as th
 - Do not enable `prod` in CI until production roots and resources are real.
 - Do not mix bootstrap-only resources and future AKS/application resources into one growing root forever.
 
-## First safe next step
+## Current safe next step
 
-Create the first reusable module under `infra/modules/aks` without changing the current `dev` backend/bootstrap layout.
+Design the first non-bootstrap environment root that will eventually call `infra/modules/aks`, without changing the current `infra/envs/dev` backend/bootstrap layout.
 
-That gives the project a forward path toward reusable infrastructure while keeping the already-applied `dev` state stable.
+That keeps the already-applied `dev` state stable while moving AKS work from module-only scaffolding toward real environment composition.
