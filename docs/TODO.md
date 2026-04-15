@@ -1,30 +1,32 @@
 # TODO
 
-Source: 32 open GitHub issues in `maxmanus96/chatops-guard` as retrieved via GitHub MCP on 2026-03-22.
+Source: GitHub issues plus merged infra/CI work refreshed on 2026-04-16.
 
-This file is a grouped planning view of the current open issues. Some open issues are umbrella or backlog-management issues, so they are represented as planning or cleanup tasks where appropriate rather than duplicated as standalone implementation work.
+This file is a grouped planning view of the current backlog after the recent bootstrap/state recovery work. Some older issues are now delivered in merged PRs and are shown here as completion or cleanup notes rather than as active implementation tasks.
 
 ## Infrastructure
 
 ### Terraform architecture and bootstrap cleanup
 - Priority: P0
-- Short summary: Finish the Terraform foundation, reconcile the open bootstrap issues with the repo's current state, and keep the backlog epic aligned with the actual infrastructure scope.
-- Estimated effort: 1-2 days
-- Dependencies: agreement on Terraform folder architecture, issue-triage pass on stale umbrella items
+- Short summary: Keep the recovered `dev` bootstrap root stable, close stale follow-up issues, and keep the backlog aligned with the repo's now-working Terraform state.
+- Estimated effort: 0.5-1 day
+- Dependencies: one clean manual drift run on `main`, issue-triage pass on stale umbrella items
 - Tasks:
-  - [ ] #12 Decide on architecture for terraform
-  - [ ] #14 INF-01 · Remote state RG & Storage
+  - [x] #14 INF-01 · Remote state RG & Storage
+  - [ ] Close stale drift follow-up issue #46 after a clean `tf-drift` run confirms no pending changes
   - [ ] Reconcile or close #5 Draft terraform folder and do initial commit if the current repo already satisfies it
   - [ ] Keep #13 Seed backlog aligned with the infrastructure child issues that remain open
 
 ### AKS and platform services baseline
 - Priority: P1
-- Short summary: Move from state-bootstrap-only Terraform toward the first real platform components needed to host the application.
-- Estimated effort: 4-7 days
-- Dependencies: final Terraform module structure, target Azure region and sizing, environment promotion plan
+- Short summary: Move from the now-stable state bootstrap toward the first real platform components needed to host the application.
+- Estimated effort: 3-5 days
+- Dependencies: final Terraform environment-root shape, target Azure region and sizing, environment promotion plan
 - Tasks:
-  - [ ] #1 Define minimal AKS module
+  - [x] #1 Define minimal AKS module
   - [ ] #15 INF-02 · Terraform AKS module (dev)
+  - [ ] Decide the first non-bootstrap env-root shape that will eventually call `infra/modules/aks`
+  - [ ] Keep AKS design decisions explicit: subnet, egress, admin access path, private-cluster timing
   - [ ] #16 INF-03 · Event Grid + Topic
   - [ ] #17 INF-04 · Azure OpenAI (private endpoint)
   - [ ] #18 INF-05 · Key Vault + Workload Identity
@@ -41,15 +43,18 @@ This file is a grouped planning view of the current open issues. Some open issue
 
 ### CI baseline, image pipeline, and scan gates
 - Priority: P0
-- Short summary: Turn the current Terraform-focused workflows into a full delivery baseline for build, scan, publish, and registry security.
-- Estimated effort: 3-5 days
-- Dependencies: container build inputs, ACR design, app image naming/versioning strategy
+- Short summary: Finish the unfinished workflow cleanup so Terraform automation is fast, reliable, and aligned with the real repo roots before broadening CI/CD further.
+- Estimated effort: 1-2 days
+- Dependencies: final decision on whether PR `#41` should be merged as-is or superseded by smaller workflow PRs
 - Tasks:
   - [ ] #2 Add Ci&CD to the repo
-  - [ ] #31 CI-01 · Build & push images to ACR
-  - [ ] #8 Secure ACR Images when they are available
+  - [ ] Resolve draft PR #41 or replace it with smaller follow-up PRs
+  - [ ] Verify `tf-drift` end-to-end on `main`, then close #43
+  - [ ] Let the drift workflow close #46 automatically, or close it manually after verification if needed
   - [ ] #28 SEC-01 · Trivy image + IaC scan gate
   - [ ] #30 SEC-03 · SBOM generation & upload
+  - [ ] #31 CI-01 · Build & push images to ACR
+  - [ ] #8 Secure ACR Images when they are available
 
 ### Deployment and promotion workflows
 - Priority: P1
@@ -108,7 +113,7 @@ This file is a grouped planning view of the current open issues. Some open issue
 - Estimated effort: 1-2 days
 - Dependencies: stable architecture decisions, local dev story, demo path
 - Tasks:
-  - [ ] #35 DOC-01 · Mermaid architecture diagram
+  - [x] #35 DOC-01 · Mermaid architecture diagram
   - [ ] #36 DOC-02 · Quick-start with KinD mocks
 
 ### Contribution and backlog documentation
