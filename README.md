@@ -114,7 +114,7 @@ Configuration details and examples will be documented as features are implemente
 - Security posture for the dev state storage account balances CI access with cost:
   - Public network access stays enabled so GitHub Actions can reach the backend; blob/anonymous access is disabled and shared keys are off (Azure AD auth only), but the endpoint remains reachable publicly.
   - Diagnostics go to a Log Analytics workspace with 30-day retention (current dev setting).
-  - Soft delete enabled on blob/container operations (7 days) to recover accidental deletions.
+  - Soft delete enabled on blob/container operations (7 days), and blob versioning remains enabled to keep tfstate recovery practical with modest dev cost impact.
   - Checkov skips in dev (documented inline in `infra/envs/dev/main.tf`) due to budget/complexity:
     - CKV2_AZURE_1 (CMK), CKV_AZURE_206 (GRS replication), CKV_AZURE_59 (public network), CKV2_AZURE_33 (private endpoint).
     - CKV_AZURE_33 (queue logging), CKV2_AZURE_21 (blob read logging).

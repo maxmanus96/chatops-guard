@@ -30,6 +30,7 @@ resource "azurerm_storage_account" "state" {
   shared_access_key_enabled       = false
   min_tls_version                 = "TLS1_2"
   blob_properties {
+    versioning_enabled = true # keep tfstate recovery practical; small extra blob storage cost in dev is acceptable
     delete_retention_policy {
       days = 7
     }
