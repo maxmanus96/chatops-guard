@@ -3,8 +3,14 @@ name: 'Terraform Plan/Apply'
 on:
   push:
     branches: [ main ]
+    paths:
+      - infra/**
+      - .github/workflows/tf-plan-apply.yaml
   pull_request:
     branches: [ main ]
+    paths:
+      - infra/**
+      - .github/workflows/tf-plan-apply.yaml
 
 permissions:
   id-token: write
