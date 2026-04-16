@@ -1,49 +1,36 @@
 # TODO
 
-Source: open GitHub issues in `maxmanus96/chatops-guard` as retrieved via GitHub MCP on 2026-03-27. Issue `#1` is active in PR `#40`, and the PR is green and open for merge.
+Source: GitHub issues plus merged infra/CI work refreshed on 2026-04-16.
 
-This file is a grouped planning view of the current open issues. Some open issues are umbrella or backlog-management issues, so they are represented as planning or cleanup tasks where appropriate rather than duplicated as standalone implementation work.
+This file is a grouped planning view of the current backlog after the recent bootstrap/state recovery work. Some older issues are now delivered in merged PRs and are shown here as completion or cleanup notes rather than as active implementation tasks.
 
 ## Infrastructure
 
 ### Terraform architecture and bootstrap cleanup
 - Priority: P0
-- Short summary: Finish the Terraform foundation, reconcile the open bootstrap issues with the repo's current state, and keep the backlog epic aligned with the actual infrastructure scope.
-- Estimated effort: 1-2 days
-- Dependencies: agreement on Terraform folder architecture, issue-triage pass on stale umbrella items
+- Short summary: Keep the recovered `dev` bootstrap root stable, close stale follow-up issues, and keep the backlog aligned with the repo's now-working Terraform state.
+- Estimated effort: 0.5-1 day
+- Dependencies: one clean manual drift run on `main`, issue-triage pass on stale umbrella items
 - Tasks:
-  - [ ] #12 Decide on architecture for terraform
-  - [ ] #14 INF-01 · Remote state RG & Storage
+  - [x] #14 INF-01 · Remote state RG & Storage
+  - [x] #46 stale drift issue closed after the recovered `dev` root returned to clean drift behavior
+  - [ ] Close issue #43 now that `tf-drift` is working again
   - [ ] Reconcile or close #5 Draft terraform folder and do initial commit if the current repo already satisfies it
   - [ ] Keep #13 Seed backlog aligned with the infrastructure child issues that remain open
 
 ### AKS and platform services baseline
 - Priority: P1
-- Short summary: Move from state-bootstrap-only Terraform toward the first real platform components needed to host the application. Issue `#1` is in PR `#40`; the next step after merge is controlled hardening, not immediate AKS deployment in dev.
-- Estimated effort: 4-7 days
-- Dependencies: final Terraform module structure, target Azure region and sizing, environment promotion plan
+- Short summary: Move from the now-stable state bootstrap toward the first real platform components needed to host the application.
+- Estimated effort: 3-5 days
+- Dependencies: final Terraform environment-root shape, target Azure region and sizing, environment promotion plan
 - Tasks:
-  - [ ] #1 Define minimal AKS module (PR #40 is green and open for merge)
-  - [ ] Merge PR #40 and keep AKS disabled in `infra/envs/dev` until environment wiring is explicitly planned
+  - [x] #1 Define minimal AKS module
   - [ ] #15 INF-02 · Terraform AKS module (dev)
+  - [ ] Decide the first non-bootstrap env-root shape that will eventually call `infra/modules/aks`
+  - [ ] Keep AKS design decisions explicit: subnet, egress, admin access path, private-cluster timing
   - [ ] #16 INF-03 · Event Grid + Topic
   - [ ] #17 INF-04 · Azure OpenAI (private endpoint)
   - [ ] #18 INF-05 · Key Vault + Workload Identity
-
-### AKS hardening follow-up after PR #40
-- Priority: P1
-- Short summary: Turn the deferred code-scanning findings from the AKS skeleton PR into explicit follow-up work, so the module can harden gradually without blocking the first reusable baseline.
-- Estimated effort: 2-4 days
-- Dependencies: PR `#40` merged, first dev-cluster scope agreed, networking and cost posture clarified
-- Tasks:
-  - [x] Add AKS upgrade-channel input with `patch` as the demo-safe default
-  - [x] For the first demo `dev` cluster, keep a public API server and restrict it with authorized IP ranges
-  - [x] Make the networking baseline explicit with Azure CNI Overlay + Cilium defaults
-  - [ ] Revisit private cluster after a VNet-connected admin or runner path exists
-  - [ ] Create a dedicated dev AKS node subnet, with `/24` as the recommended starting shape, and keep `outbound_type = "loadBalancer"` for the first demo cluster
-  - [ ] Add Secrets Store CSI auto-rotation when Key Vault integration is introduced
-  - [ ] Revisit paid SKU, ephemeral OS disk, host encryption, disk encryption set, and node-pool separation after the first real cluster shape is chosen
-  - [ ] Retire the temporary AKS Checkov skips as each hardening slice becomes real
 
 ### Cluster policy and runtime guardrails
 - Priority: P1
@@ -57,16 +44,16 @@ This file is a grouped planning view of the current open issues. Some open issue
 
 ### CI baseline, image pipeline, and scan gates
 - Priority: P0
-- Short summary: Turn the current Terraform-focused workflows into a full delivery baseline for build, scan, publish, and registry security. Keep the workflow fixes in PR `#41` separate from the AKS module work.
-- Estimated effort: 3-5 days
-- Dependencies: container build inputs, ACR design, app image naming/versioning strategy
+- Short summary: Use the now-working Terraform workflow baseline as the starting point for the next CI/CD slices instead of spending more time on bootstrap/workflow repair.
+- Estimated effort: 2-4 days
+- Dependencies: issue hygiene cleanup after the recent merges, image naming/versioning strategy
 - Tasks:
   - [ ] #2 Add Ci&CD to the repo
-  - [ ] Fix the PR #41 SARIF upload failure, then merge it once the workflow behavior looks correct in GitHub
-  - [ ] #31 CI-01 · Build & push images to ACR
-  - [ ] #8 Secure ACR Images when they are available
+  - [ ] Close issue #43 now that the repaired `tf-drift` workflow is stable again
   - [ ] #28 SEC-01 · Trivy image + IaC scan gate
   - [ ] #30 SEC-03 · SBOM generation & upload
+  - [ ] #31 CI-01 · Build & push images to ACR
+  - [ ] #8 Secure ACR Images when they are available
 
 ### Deployment and promotion workflows
 - Priority: P1
@@ -125,7 +112,7 @@ This file is a grouped planning view of the current open issues. Some open issue
 - Estimated effort: 1-2 days
 - Dependencies: stable architecture decisions, local dev story, demo path
 - Tasks:
-  - [ ] #35 DOC-01 · Mermaid architecture diagram
+  - [x] #35 DOC-01 · Mermaid architecture diagram
   - [ ] #36 DOC-02 · Quick-start with KinD mocks
 
 ### Contribution and backlog documentation

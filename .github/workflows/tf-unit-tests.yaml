@@ -31,11 +31,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    # Checkout the repository to the GitHub Actions runner
     - name: Checkout
       uses: actions/checkout@v4
 
-    # Install the latest version of Terraform CLI
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3
       with:
@@ -44,19 +42,31 @@ jobs:
     # Initialize and validate both the live dev root and the AKS module skeleton.
     - name: Terraform Init
       run: |
-        for dir in infra/envs/dev infra/modules/aks; do
+        dirs="infra/envs/dev"
+        if [ -d infra/modules/aks ]; then
+          dirs="$dirs infra/modules/aks"
+        fi
+        for dir in $dirs; do
           terraform -chdir="$dir" init -backend=false
         done
 
     - name: Terraform Validate
       run: |
-        for dir in infra/envs/dev infra/modules/aks; do
+        dirs="infra/envs/dev"
+        if [ -d infra/modules/aks ]; then
+          dirs="$dirs infra/modules/aks"
+        fi
+        for dir in $dirs; do
           terraform -chdir="$dir" validate
         done
 
     - name: Terraform Format
       run: |
-        for dir in infra/envs/dev infra/modules/aks; do
+        dirs="infra/envs/dev"
+        if [ -d infra/modules/aks ]; then
+          dirs="$dirs infra/modules/aks"
+        fi
+        for dir in $dirs; do
           terraform -chdir="$dir" fmt -check -recursive
         done
 

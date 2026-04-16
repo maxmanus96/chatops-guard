@@ -1,14 +1,12 @@
 # ChatOps Guard
 
-A cloud and DevOps portfolio project for ChatOps Guard. The repo is infrastructure-first today: Terraform bootstrap is live in `infra/envs/dev`, while most application code remains roadmap material.
+A security and monitoring tool for ChatOps environments that helps protect and control chat-based operations.
 
 ## Overview
 
 ChatOps Guard is designed to provide security, monitoring, and access control for ChatOps (Chat Operations) workflows. It helps organizations safely implement chat-based automation by providing guardrails and security measures for bot interactions and automated processes.
 
 ## Architecture
-
-The diagram below is the target architecture, not the fully implemented state.
 
 ```mermaid
 graph TB
@@ -111,13 +109,20 @@ Configuration details and examples will be documented as features are implemente
 
 ## Infrastructure & Security Notes
 
-- Terraform lives under `infra/envs/<env>`. `infra/envs/dev` is the active environment and already provisions the remote-state resources that back Terraform operations. Production definitions exist but remain dormant until explicitly enabled via GitHub Actions `TF_TARGET_ENVS`.
-- The first reusable platform module, `infra/modules/aks`, is in progress on issue `#1` and tracked in PR `#40`. The current module baseline now makes AKS API access, upgrade channel, monitoring, and Azure CNI Overlay + Cilium networking explicit without wiring a real cluster into `dev` yet.
+- Terraform lives under `infra/envs/<env>` and currently manages only the `dev` bootstrap/state resources. The live `dev` root is now state-aligned again and `terraform plan/apply` succeeds from CI.
+- The active `dev` bootstrap root currently manages:
+  - the state resource group
+  - the state storage account and `tfstate` container
+  - the Log Analytics workspace used for storage diagnostics
+  - the blob-service diagnostic setting that sends storage logs/metrics to Log Analytics
+- `infra/modules/aks` now exists as the first reusable platform module, but it is still not wired into a non-bootstrap environment root and does not create a real AKS cluster yet.
+- Production definitions exist but remain dormant until explicitly enabled via GitHub Actions `TF_TARGET_ENVS`.
 - GitHub Actions workflow `.github/workflows/tf-plan-apply.yaml` uses a matrix to run `plan/apply` per environment while scoping Terraform commands to `infra/envs/<env>` so prod is untouched unless opted in.
 - Security posture for the dev state storage account balances CI access with cost:
-  - Public network access stays enabled so GitHub Actions can reach the backend; blob/anonymous access is disabled and shared keys are off (Azure AD auth only), but the endpoint remains reachable publicly.
-  - Diagnostics go to a Log Analytics workspace with 30-day retention (current dev setting).
-  - Soft delete enabled on blob/container operations (7 days) to recover accidental deletions.
+  - Public network access stays enabled so GitHub Actions can reach the backend; blob/anonymous access is disabled and shared keys are off.
+  - Azure AD auth is preferred end-to-end for the storage account, and the Terraform provider is configured to use Azure AD for storage data-plane operations.
+  - Diagnostics go to a Log Analytics workspace with 30-day retention, using the blob service resource scope that Azure Monitor actually supports for storage read/write/delete logs.
+  - Soft delete is enabled on blob/container operations (7 days), and blob versioning remains enabled to keep tfstate recovery practical with modest dev cost impact.
   - Checkov skips in dev (documented inline in `infra/envs/dev/main.tf`) due to budget/complexity:
     - CKV2_AZURE_1 (CMK), CKV_AZURE_206 (GRS replication), CKV_AZURE_59 (public network), CKV2_AZURE_33 (private endpoint).
     - CKV_AZURE_33 (queue logging), CKV2_AZURE_21 (blob read logging).

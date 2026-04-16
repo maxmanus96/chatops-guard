@@ -1,8 +1,15 @@
 # Infra & Workflow Plan
 
-## Terraform Environments
-- `infra/envs/dev`: the live, already planned/applied remote-state RG/storage/container that backs all Terraform operations. Hardened for public access, logging, and Azure AD auth; remains cost-optimized (LRS, no CMK/private endpoints).
-- `infra/envs/prod`: placeholder; backend/provider files exist but no resources are created until the environment is explicitly enabled via CI (`TF_TARGET_ENVS`).
+## Current State
+- `infra/envs/dev` is the active Terraform bootstrap root.
+- The `dev` root now successfully manages:
+  - the state resource group
+  - the state storage account and `tfstate` container
+  - the Log Analytics workspace
+  - blob-service diagnostics for the state account
+- The `dev` remote state is aligned with Azure again after importing the pre-existing bootstrap resources and correcting the storage diagnostics scope.
+- `infra/envs/prod` remains a dormant placeholder.
+- `infra/modules/aks` exists as the first reusable platform module, but it is still not wired into a non-bootstrap environment root. That makes issue `#15` the real infrastructure next step, not more bootstrap repair.
 
 ## CI/CD Flow
 1. `tf-plan-apply` workflow (GitHub Actions) runs in matrix mode over `TF_TARGET_ENVS` (defaults to `["dev"]`).
@@ -12,13 +19,17 @@
    - Executes TFLint/tfsec scoped to the same directory.
    - Uploads the per-environment plan artifact and computed exit code.
 3. Apply jobs download the matching artifact, inspect the exit code, and only run `terraform apply` when changes exist and the branch is `main`.
+4. `tf-drift` is now scoped to `infra/envs/dev`, uses Azure OIDC login, and should keep stale drift issues closed when no changes exist.
+5. `tf-unit-tests.yaml` now validates the live `dev` root and tolerates optional module paths, while `tf-destroy.yaml` provides a guarded manual destroy path for cost-control or teardown scenarios.
 
 ## Security Hardening Status (Dev)
 | Control | Status | Notes |
 | --- | --- | --- |
 | Disable public/anonymous access | ⚠️ | Blob/anonymous access flags are off and soft delete enabled, but public network access remains enabled for CI. |
 | Enforce Azure AD auth only | ✅ | `shared_access_key_enabled = false`, `default_to_oauth_authentication = true`. |
-| Diagnostics to Log Analytics | ✅ | Dev LA workspace with 30-day retention (aligns with current setup; adjust if cost grows). |
+| Azure AD storage provider path | ✅ | `storage_use_azuread = true` avoids key-based storage operations in Terraform. |
+| Diagnostics to Log Analytics | ✅ | Dev LA workspace with 30-day retention; diagnostics now target the blob service scope Azure actually supports. |
+| Blob versioning | ✅ | Kept enabled on the dev state account to improve tfstate recovery; extra blob storage cost should stay modest for this small dev backend. |
 | Checkov skips (dev) | ⚠️ | CKV2_AZURE_1, CKV_AZURE_206, CKV_AZURE_59, CKV2_AZURE_33, CKV_AZURE_33, CKV2_AZURE_21 (documented inline). |
 | SAS expiration policy | ⏳ | Terraform support limited; revisit when prod environment is built. |
 | Customer-managed keys | ⏳ | Requires Key Vault + key rotation; deferred for cost reasons. |
@@ -26,27 +37,25 @@
 | Geo-redundant replication | ⏳ | LRS kept for budget; document justification in code comment. |
 
 ## Next Steps
-1. Merge the green AKS module skeleton in PR `#40` and keep AKS disabled in `infra/envs/dev` until environment wiring is explicitly planned.
-2. Fix the PR `#41` SARIF upload failure, then merge it once the workflow behavior in GitHub matches the intended Terraform scope and validation flow.
-3. Continue issue `#15` as small AKS hardening slices, now with explicit Azure CNI Overlay + Cilium plus a dedicated `/24` node subnet recommendation and `loadBalancer` demo egress before any real cluster apply.
-4. Decide when to enable prod in CI by setting `TF_TARGET_ENVS` repo variable (e.g., `["dev","prod"]`), once prod resources are defined.
-5. If Log Analytics cost is high in dev, consider lowering retention, switching diagnostics to a storage account, or making diagnostics optional per environment.
+1. Close stale issue hygiene for delivered workflow/bootstrap work if GitHub has not already caught up, especially issue `#43`.
+2. Continue issue `#15` by designing the first non-bootstrap environment wiring for AKS. Do not apply AKS in `dev` yet; decide the env-root shape first.
+3. Keep AKS disabled in `infra/envs/dev`; the bootstrap root should not silently grow into the long-term platform root.
+4. Only after the AKS env-root decision is settled, revisit additional dev hardening upgrades such as SAS policy, CMK, private endpoints, or GRS.
 
-## ROI Priority Order (2026-04-06)
+## ROI Priority Order (2026-04-16)
 
 ### Recommendation
-- Merge PR `#40` from its current green, non-draft state.
-- Fix PR `#41` next so the Terraform workflow behavior stays aligned with the repo's actual roots, then merge it once the SARIF path is green in GitHub.
-- Continue issue `#15` after PR `#40` as small hardening slices only; do not apply a dev AKS cluster yet, and keep accepted-risk Checkov skips explicit until their matching hardening slices land.
-- Treat `#2`, `#5`, and `#13` as umbrella or cleanup issues; do not let them outrank the more concrete scoped issues.
+- Treat bootstrap/state recovery and the recent workflow cleanup as done unless drift or apply proves otherwise.
+- Keep AKS work on issue `#15` focused on environment wiring and explicit design decisions, not on provisioning a real cluster yet.
+- Use umbrella issues such as `#2` and `#13` for tracking only; do not let them outrank the scoped implementation work.
 
 ### Highest ROI / lowest direct cloud cost
-1. Lock the Terraform shape and close the bootstrap/docs gap:
-   - `#12`, `#14`, `#35`, `#36`
-2. Start reusable Terraform without provisioning more Azure resources:
-   - `#1`, `#15`
-3. Improve supply-chain and project automation with mostly engineering time, not cloud spend:
+1. Continue reusable Terraform without provisioning more Azure resources:
+   - `#15`
+2. Improve supply-chain and project automation with mostly engineering time, not cloud spend:
    - `#28`, `#30`, `#38`, `#39`
+3. Close stale issue hygiene for recently delivered work:
+   - `#1`, `#43`
 
 ### Medium ROI / moderate setup cost
 4. Complete delivery plumbing once images and charts exist:
@@ -61,8 +70,7 @@
    - `#23`, `#25`, `#26`, `#37`
 
 ## Suggested Sequence
-1. Merge the current green AKS module PR `#40`.
-2. Fix PR `#41` in GitHub, then merge it once the SARIF upload path is behaving predictably.
-3. Continue the next AKS hardening slices in issue `#15`, now with explicit Azure CNI Overlay + Cilium plus a dedicated `/24` node subnet recommendation and `loadBalancer` demo egress before any real environment wiring.
-4. Tighten docs and quick-start guidance so the repo is easier to evaluate and continue from.
-5. Then return to the next highest-ROI CI/CD and application skeleton work.
+1. Reconcile issue hygiene for delivered infra and workflow work (`#1`, `#14`, `#43`).
+2. Resume AKS design from the environment-wiring side instead of adding more skeleton-only hardening.
+3. Keep docs aligned with the actual branch and merge state so planning does not outrun code again.
+4. Then return to the smallest application skeleton work.

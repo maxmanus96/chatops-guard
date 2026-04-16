@@ -48,6 +48,7 @@ resource "azurerm_storage_account" "state" {
   shared_access_key_enabled       = false
   min_tls_version                 = "TLS1_2"
   blob_properties {
+    versioning_enabled = true # keep tfstate recovery practical; small extra blob storage cost in dev is acceptable
     delete_retention_policy {
       days = 7
     }
@@ -76,14 +77,10 @@ resource "azurerm_log_analytics_workspace" "logs" {
 
 resource "azurerm_monitor_diagnostic_setting" "state_logs" {
   name                       = "diag-storage-state"
-  target_resource_id         = azurerm_storage_account.state.id
+  target_resource_id         = "${azurerm_storage_account.state.id}/blobServices/default"
   log_analytics_workspace_id = azurerm_log_analytics_workspace.logs.id
 
-  # Blob service logs/metrics
-  enabled_log {
-    category = "AuditEvent"
-  }
-
+  # Azure exposes blob service read/write/delete logs on the blob service resource, not on the storage account root.
   enabled_log {
     category = "StorageRead"
   }
@@ -97,7 +94,11 @@ resource "azurerm_monitor_diagnostic_setting" "state_logs" {
   }
 
   enabled_metric {
-    category = "AllMetrics"
+    category = "Capacity"
+  }
+
+  enabled_metric {
+    category = "Transaction"
   }
 }
 
