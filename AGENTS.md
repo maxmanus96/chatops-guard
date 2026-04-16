@@ -31,6 +31,8 @@ Do not assume the README roadmap already exists in code.
 - Inspect first before proposing or changing anything.
 - Explain simply, propose the smallest safe next step, and implement only that step unless the user asks for a broader change.
 - After each meaningful change, explain the diff and the lesson behind it so the user can follow the reasoning.
+- When the user says `END THE BLOCK`, finish with a very short learning note using these fields: `Date`, `Task`, `What changed`, `Why it matters`, `What confused me`, `Validation`, `Next step`, `Interview note`, `Can I explain it in 3 sentences? Yes/No`.
+- If that final answer is `No`, immediately explain the confusing concept simply in this exact project context with one example before ending the block.
 - Keep changes minimal, reviewable, and easy to validate.
 - Prefer correctness, idempotence, least privilege, and clear rollback paths.
 - Keep dev and prod separation intact. Do not broaden `TF_TARGET_ENVS` or enable prod by accident.

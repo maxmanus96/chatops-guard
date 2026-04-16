@@ -115,6 +115,7 @@ Configuration details and examples will be documented as features are implemente
   - the state storage account and `tfstate` container
   - the Log Analytics workspace used for storage diagnostics
   - the blob-service diagnostic setting that sends storage logs/metrics to Log Analytics
+- `infra/modules/aks` now exists as the first reusable platform module, but it is still not wired into a non-bootstrap environment root and does not create a real AKS cluster yet.
 - Production definitions exist but remain dormant until explicitly enabled via GitHub Actions `TF_TARGET_ENVS`.
 - GitHub Actions workflow `.github/workflows/tf-plan-apply.yaml` uses a matrix to run `plan/apply` per environment while scoping Terraform commands to `infra/envs/<env>` so prod is untouched unless opted in.
 - Security posture for the dev state storage account balances CI access with cost:

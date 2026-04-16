@@ -13,7 +13,8 @@ This file is a grouped planning view of the current backlog after the recent boo
 - Dependencies: one clean manual drift run on `main`, issue-triage pass on stale umbrella items
 - Tasks:
   - [x] #14 INF-01 · Remote state RG & Storage
-  - [ ] Close stale drift follow-up issue #46 after a clean `tf-drift` run confirms no pending changes
+  - [x] #46 stale drift issue closed after the recovered `dev` root returned to clean drift behavior
+  - [ ] Close issue #43 now that `tf-drift` is working again
   - [ ] Reconcile or close #5 Draft terraform folder and do initial commit if the current repo already satisfies it
   - [ ] Keep #13 Seed backlog aligned with the infrastructure child issues that remain open
 
@@ -43,14 +44,12 @@ This file is a grouped planning view of the current backlog after the recent boo
 
 ### CI baseline, image pipeline, and scan gates
 - Priority: P0
-- Short summary: Finish the unfinished workflow cleanup so Terraform automation is fast, reliable, and aligned with the real repo roots before broadening CI/CD further.
-- Estimated effort: 1-2 days
-- Dependencies: final decision on whether PR `#41` should be merged as-is or superseded by smaller workflow PRs
+- Short summary: Use the now-working Terraform workflow baseline as the starting point for the next CI/CD slices instead of spending more time on bootstrap/workflow repair.
+- Estimated effort: 2-4 days
+- Dependencies: issue hygiene cleanup after the recent merges, image naming/versioning strategy
 - Tasks:
   - [ ] #2 Add Ci&CD to the repo
-  - [ ] Resolve draft PR #41 or replace it with smaller follow-up PRs
-  - [ ] Verify `tf-drift` end-to-end on `main`, then close #43
-  - [ ] Let the drift workflow close #46 automatically, or close it manually after verification if needed
+  - [ ] Close issue #43 now that the repaired `tf-drift` workflow is stable again
   - [ ] #28 SEC-01 · Trivy image + IaC scan gate
   - [ ] #30 SEC-03 · SBOM generation & upload
   - [ ] #31 CI-01 · Build & push images to ACR
