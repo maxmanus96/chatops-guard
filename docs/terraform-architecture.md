@@ -13,7 +13,9 @@ The repository already has a live `dev` Terraform layout under `infra/envs/dev` 
 - `infra/envs/dev` is the active Terraform root.
 - `infra/envs/dev` currently manages remote-state bootstrap resources and now successfully plans/applies again after the bootstrap resources were imported into state and the storage diagnostics scope was corrected.
 - `infra/envs/prod` exists as a placeholder.
-- `infra/modules/aks` now exists as the first reusable module, but it is not wired into a non-bootstrap environment root yet.
+- `infra/modules/aks` now exists as the first reusable module, delivered by issue `#1` and PR `#40`.
+- `infra/envs/dev-platform` now exists as the first thin non-bootstrap environment root that composes the AKS module without changing the live bootstrap root.
+- That root now has its own backend/state and has been safely applied once to create only the platform resource group while `enable_aks = false` keeps cluster creation off by default.
 
 ## Decision
 
@@ -68,6 +70,17 @@ Until a migration is planned, treat the current `infra/envs/dev` directory as th
 
 ## Current safe next step
 
-Design the first non-bootstrap environment root that will eventually call `infra/modules/aks`, without changing the current `infra/envs/dev` backend/bootstrap layout.
+That step is now done: `infra/envs/dev-platform` is the first thin non-bootstrap environment root that composes the AKS module while leaving `infra/envs/dev` bootstrap-only.
+
+Why the name is explicit right now:
+
+- `infra/envs/dev` is still the live bootstrap root
+- `infra/envs/dev-platform` makes the platform boundary visible until there is an explicit bootstrap migration plan
+
+## Next safe step after that scaffold
+
+Keep the first real `dev-platform` rollout on explicit injected inputs for the node-subnet ID and Log Analytics workspace ID. The repo now documents that contract in `infra/envs/dev-platform/terraform.tfvars.example`.
+
+Then fill in the real values before any first `enable_aks = true` AKS plan/apply.
 
 That keeps the already-applied `dev` state stable while moving AKS work from module-only scaffolding toward real environment composition.

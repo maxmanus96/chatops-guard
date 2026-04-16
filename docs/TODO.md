@@ -20,13 +20,19 @@ This file is a grouped planning view of the current backlog after the recent boo
 
 ### AKS and platform services baseline
 - Priority: P1
-- Short summary: Move from the now-stable state bootstrap toward the first real platform components needed to host the application.
+- Short summary: Keep bootstrap separate from platform composition while turning the merged AKS module into a staged environment-root path.
 - Estimated effort: 3-5 days
-- Dependencies: final Terraform environment-root shape, target Azure region and sizing, environment promotion plan
+- Dependencies: final environment-root wiring for network and monitoring inputs, target Azure region and sizing, environment promotion plan
 - Tasks:
   - [x] #1 Define minimal AKS module
-  - [ ] #15 INF-02 · Terraform AKS module (dev)
-  - [ ] Decide the first non-bootstrap env-root shape that will eventually call `infra/modules/aks`
+  - [x] #15 INF-02 · Terraform AKS module (dev) closed by PR #40
+  - [x] Scaffold `infra/envs/dev-platform` as the first non-bootstrap environment root for AKS composition
+  - [x] Add `enable_aks = false` so the first safe apply can create only the platform resource group
+  - [x] Apply `infra/envs/dev-platform` once to create `rg-chatops-guard-platform-dev` without creating AKS
+  - [x] Keep `vnet_subnet_id` and `log_analytics_workspace_id` as explicit injected inputs for now
+  - [x] Add `terraform.tfvars.example` so the safe-first-apply path and first AKS-enable path are both visible
+  - [ ] Fill in the real `vnet_subnet_id` and `log_analytics_workspace_id` values before the first `enable_aks = true` apply
+  - [ ] Decide later whether those dependencies should stay injected inputs or move behind sibling modules/data sources
   - [ ] Keep AKS design decisions explicit: subnet, egress, admin access path, private-cluster timing
   - [ ] #16 INF-03 · Event Grid + Topic
   - [ ] #17 INF-04 · Azure OpenAI (private endpoint)

@@ -9,7 +9,8 @@
   - blob-service diagnostics for the state account
 - The `dev` remote state is aligned with Azure again after importing the pre-existing bootstrap resources and correcting the storage diagnostics scope.
 - `infra/envs/prod` remains a dormant placeholder.
-- `infra/modules/aks` exists as the first reusable platform module, but it is still not wired into a non-bootstrap environment root. That makes issue `#15` the real infrastructure next step, not more bootstrap repair.
+- `infra/modules/aks` exists as the first reusable platform module.
+- `infra/envs/dev-platform` is the first thin non-bootstrap platform root that composes it. It now has its own backend/state and has been safely applied once to create only `rg-chatops-guard-platform-dev`, while AKS remains disabled by default.
 
 ## CI/CD Flow
 1. `tf-plan-apply` workflow (GitHub Actions) runs in matrix mode over `TF_TARGET_ENVS` (defaults to `["dev"]`).
@@ -38,24 +39,27 @@
 
 ## Next Steps
 1. Close stale issue hygiene for delivered workflow/bootstrap work if GitHub has not already caught up, especially issue `#43`.
-2. Continue issue `#15` by designing the first non-bootstrap environment wiring for AKS. Do not apply AKS in `dev` yet; decide the env-root shape first.
-3. Keep AKS disabled in `infra/envs/dev`; the bootstrap root should not silently grow into the long-term platform root.
-4. Only after the AKS env-root decision is settled, revisit additional dev hardening upgrades such as SAS policy, CMK, private endpoints, or GRS.
+2. Keep AKS disabled in `infra/envs/dev`; the bootstrap root should not silently grow into the long-term platform root.
+3. Keep `vnet_subnet_id` and `log_analytics_workspace_id` as explicit injected inputs for now, and use `terraform.tfvars.example` as the contract for the first real cluster rollout.
+4. Fill in the real dependency values before the first `enable_aks = true` plan/apply.
+5. Only after that, flip `enable_aks` on deliberately and plan the first real cluster rollout.
+6. Then revisit additional dev hardening upgrades such as SAS policy, CMK, private endpoints, or GRS.
 
 ## ROI Priority Order (2026-04-16)
 
 ### Recommendation
 - Treat bootstrap/state recovery and the recent workflow cleanup as done unless drift or apply proves otherwise.
-- Keep AKS work on issue `#15` focused on environment wiring and explicit design decisions, not on provisioning a real cluster yet.
+- Treat the next AKS slice as staged environment-composition work on `infra/envs/dev-platform`: first the guarded root and platform RG, then dependency wiring, and only then a real cluster apply.
+- Use issue `#12` as the architecture anchor until a dedicated follow-up AKS env-root issue exists.
 - Use umbrella issues such as `#2` and `#13` for tracking only; do not let them outrank the scoped implementation work.
 
 ### Highest ROI / lowest direct cloud cost
-1. Continue reusable Terraform without provisioning more Azure resources:
-   - `#15`
+1. Turn reusable Terraform into the first thin platform root and finish its input wiring before provisioning a real cluster:
+   - `#12` plus the AKS env-root wiring follow-up
 2. Improve supply-chain and project automation with mostly engineering time, not cloud spend:
    - `#28`, `#30`, `#38`, `#39`
 3. Close stale issue hygiene for recently delivered work:
-   - `#1`, `#43`
+   - `#1`, `#15`, `#43`
 
 ### Medium ROI / moderate setup cost
 4. Complete delivery plumbing once images and charts exist:
@@ -70,7 +74,10 @@
    - `#23`, `#25`, `#26`, `#37`
 
 ## Suggested Sequence
-1. Reconcile issue hygiene for delivered infra and workflow work (`#1`, `#14`, `#43`).
-2. Resume AKS design from the environment-wiring side instead of adding more skeleton-only hardening.
-3. Keep docs aligned with the actual branch and merge state so planning does not outrun code again.
-4. Then return to the smallest application skeleton work.
+1. Reconcile issue hygiene for delivered infra and workflow work (`#1`, `#14`, `#15`, `#43`).
+2. Keep AKS work on `infra/envs/dev-platform` instead of adding more module-only hardening or mixing platform resources into `infra/envs/dev`.
+3. Keep the first real dev platform root on explicit injected network and monitoring inputs for now, documented in `terraform.tfvars.example`.
+4. Fill in the real dependency values.
+5. Only after that, flip `enable_aks` on and plan the first real cluster rollout.
+6. Keep docs aligned with the actual branch and merge state so planning does not outrun code again.
+7. Then return to the smallest application skeleton work.

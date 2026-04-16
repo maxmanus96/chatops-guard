@@ -27,6 +27,7 @@ override.tf.json
 
 # Include tfplan files to ignore the plan output of command: terraform plan -out=tfplan
 # example: *tfplan*
+*tfplan*
 
 # Terraform child modules may be initialized locally for validation, but provider lock files belong in root modules.
 infra/modules/**/.terraform.lock.hcl
