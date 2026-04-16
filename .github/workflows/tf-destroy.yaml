@@ -79,7 +79,7 @@ jobs:
       run: terraform -chdir=${{ env.TF_ENV_DIR }} init -input=false
 
     - name: Terraform Destroy Plan
-      run: terraform -chdir=${{ env.TF_ENV_DIR }} plan -destroy -no-color -input=false -out=tfdestroyplan
+      run: terraform -chdir=${{ env.TF_ENV_DIR }} plan -destroy -lock-timeout=5m -no-color -input=false -out=tfdestroyplan
 
     - name: Publish Destroy Summary
       run: |
@@ -88,4 +88,4 @@ jobs:
         terraform -chdir=${{ env.TF_ENV_DIR }} show -no-color tfdestroyplan >> $GITHUB_STEP_SUMMARY
 
     - name: Terraform Destroy Apply
-      run: terraform -chdir=${{ env.TF_ENV_DIR }} apply -auto-approve tfdestroyplan
+      run: terraform -chdir=${{ env.TF_ENV_DIR }} apply -lock-timeout=5m -auto-approve tfdestroyplan

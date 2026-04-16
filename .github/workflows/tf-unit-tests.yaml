@@ -9,6 +9,10 @@
 name: 'Terraform Unit Tests'
 
 on:
+  push:
+    paths:
+      - 'infra/**'
+      - '.github/workflows/tf-unit-tests.yaml'
   pull_request:
     branches: [ main ]
     paths:
