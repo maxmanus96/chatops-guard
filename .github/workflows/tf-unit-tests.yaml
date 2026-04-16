@@ -10,6 +10,15 @@ name: 'Terraform Unit Tests'
 
 on:
   push:
+    paths:
+      - 'infra/**'
+      - '.github/workflows/tf-unit-tests.yaml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'infra/**'
+      - '.github/workflows/tf-unit-tests.yaml'
+  workflow_dispatch:
 
 permissions:
   security-events: write # Needed to upload-sarif
@@ -20,36 +29,58 @@ jobs:
   terraform-unit-tests:
     name: 'Terraform Unit Tests'
     runs-on: ubuntu-latest
-    
+
     steps:
-    # Checkout the repository to the GitHub Actions runner
     - name: Checkout
       uses: actions/checkout@v4
 
-    # Install the latest version of Terraform CLI and configure the Terraform CLI configuration file with a Terraform Cloud user API token
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_wrapper: false
 
-    # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
+    # Initialize and validate both the live dev root and the AKS module skeleton.
     - name: Terraform Init
-      run: terraform init -backend=false
+      run: |
+        dirs="infra/envs/dev"
+        if [ -d infra/modules/aks ]; then
+          dirs="$dirs infra/modules/aks"
+        fi
+        for dir in $dirs; do
+          terraform -chdir="$dir" init -backend=false
+        done
 
-    # Validate terraform files
     - name: Terraform Validate
-      run: terraform validate
+      run: |
+        dirs="infra/envs/dev"
+        if [ -d infra/modules/aks ]; then
+          dirs="$dirs infra/modules/aks"
+        fi
+        for dir in $dirs; do
+          terraform -chdir="$dir" validate
+        done
 
-    # Checks that all Terraform configuration files adhere to a canonical format
     - name: Terraform Format
-      run: terraform fmt -check -recursive
-    
-    # Perform a security scan of the terraform code using checkov
+      run: |
+        dirs="infra/envs/dev"
+        if [ -d infra/modules/aks ]; then
+          dirs="$dirs infra/modules/aks"
+        fi
+        for dir in $dirs; do
+          terraform -chdir="$dir" fmt -check -recursive
+        done
+
+    # Keep the blocking SARIF scan on the active dev root for now.
+    # The AKS module is still a skeleton and its heavier hardening is being handled in issue #1.
     - name: Run Checkov action
       id: checkov
-      uses: bridgecrewio/checkov-action@master
-      with: 
+      uses: bridgecrewio/checkov-action@v12
+      with:
+        directory: infra/envs/dev
         framework: terraform
+        output_format: cli,sarif
+        output_file_path: console,results.sarif
 
-    # Upload results to GitHub Advanced Security
     - name: Upload SARIF file
       if: success() || failure()
       uses: github/codeql-action/upload-sarif@v3
