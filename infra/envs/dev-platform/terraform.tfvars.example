@@ -1,5 +1,6 @@
 # Safe default for the first apply of this root:
-# create only rg-chatops-guard-platform-dev and keep AKS off.
+# create rg-chatops-guard-platform-dev plus its minimal VNet/subnet foundation,
+# and keep AKS off.
 enable_aks = false
 
 # Optional overrides for the platform root itself.
@@ -10,14 +11,22 @@ dns_prefix                   = "aks-dev-guard"
 node_count                   = 1
 node_vm_size                 = "Standard_D2_v2"
 
+# Minimal dev network slice managed by this root.
+vnet_name                = "vnet-chatops-guard-dev"
+vnet_address_space       = ["10.30.0.0/16"]
+aks_node_subnet_name     = "snet-aks-nodes"
+aks_node_subnet_prefixes = ["10.30.0.0/24"]
+
+# Existing monitoring dependency looked up from the bootstrap resources.
+log_analytics_workspace_name        = "log-chatops-guard-dev"
+log_analytics_resource_group_name   = "rg-chatops-guard-state"
+
 # When you are ready for the first real AKS plan/apply:
 # 1. change enable_aks to true
-# 2. provide the real network and monitoring dependencies below
+# 2. keep the network defaults or adjust them deliberately
 # 3. add your stable public IP as a /32 if you want demo-time API access restriction
 #
-# enable_aks                  = true
-# vnet_subnet_id              = "/subscriptions/<sub-id>/resourceGroups/rg-chatops-guard-network-dev/providers/Microsoft.Network/virtualNetworks/vnet-chatops-guard-dev/subnets/snet-aks-nodes"
-# log_analytics_workspace_id  = "/subscriptions/<sub-id>/resourceGroups/rg-chatops-guard-state/providers/Microsoft.OperationalInsights/workspaces/log-chatops-guard-dev"
+# enable_aks = true
 # api_server_authorized_ip_ranges = [
 #   "203.0.113.10/32",
 # ]

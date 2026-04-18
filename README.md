@@ -115,7 +115,7 @@ Configuration details and examples will be documented as features are implemente
   - the state storage account and `tfstate` container
   - the Log Analytics workspace used for storage diagnostics
   - the blob-service diagnostic setting that sends storage logs/metrics to Log Analytics
-- `infra/modules/aks` now exists as the first reusable platform module, and `infra/envs/dev-platform` is the first thin non-bootstrap root that composes it. That root now has its own backend/state and has been safely applied once to create only `rg-chatops-guard-platform-dev`, while AKS stays explicitly disabled by default via `enable_aks = false` and is documented with `infra/envs/dev-platform/terraform.tfvars.example`.
+- `infra/modules/aks` now exists as the first reusable platform module, and `infra/envs/dev-platform` is the first thin non-bootstrap root that composes it. That root now has its own backend/state, has safely applied `rg-chatops-guard-platform-dev` plus a minimal VNet/subnet foundation, and can produce a real `enable_aks = true` plan while AKS still stays explicitly gated by default.
 - Production definitions exist but remain dormant until explicitly enabled via GitHub Actions `TF_TARGET_ENVS`.
 - GitHub Actions workflow `.github/workflows/tf-plan-apply.yaml` uses a matrix to run `plan/apply` per environment while scoping Terraform commands to `infra/envs/<env>` so prod is untouched unless opted in.
 - Security posture for the dev state storage account balances CI access with cost:

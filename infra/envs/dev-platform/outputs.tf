@@ -3,6 +3,31 @@ output "platform_resource_group_name" {
   value       = azurerm_resource_group.platform.name
 }
 
+output "vnet_id" {
+  description = "Virtual network resource ID for the dev platform root."
+  value       = module.network.vnet_id
+}
+
+output "vnet_name" {
+  description = "Virtual network name for the dev platform root."
+  value       = module.network.vnet_name
+}
+
+output "aks_node_subnet_id" {
+  description = "AKS node subnet resource ID."
+  value       = module.network.aks_node_subnet_id
+}
+
+output "aks_node_subnet_name" {
+  description = "AKS node subnet name."
+  value       = module.network.aks_node_subnet_name
+}
+
+output "log_analytics_workspace_id" {
+  description = "Existing Log Analytics workspace resource ID used by AKS monitoring."
+  value       = data.azurerm_log_analytics_workspace.logs.id
+}
+
 output "aks_id" {
   description = "AKS cluster resource ID."
   value       = var.enable_aks ? module.aks[0].id : null

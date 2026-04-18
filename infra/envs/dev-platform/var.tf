@@ -1,5 +1,5 @@
 variable "platform_resource_group_name" {
-  description = "Resource group that will contain the dev platform resources such as AKS."
+  description = "Resource group that will contain the dev platform resources such as AKS and its network foundation."
   type        = string
   default     = "rg-chatops-guard-platform-dev"
 
@@ -43,7 +43,7 @@ variable "dns_prefix" {
 }
 
 variable "enable_aks" {
-  description = "Whether this root should create the AKS cluster. Keep false for the first safe apply so only the platform resource group is created."
+  description = "Whether this root should create the AKS cluster. Keep false for the first safe apply so only the platform resource group and network foundation are created."
   type        = bool
   default     = false
 }
@@ -66,25 +66,69 @@ variable "node_vm_size" {
   default     = "Standard_D2_v2"
 }
 
-variable "vnet_subnet_id" {
-  description = "Subnet resource ID for the AKS node pool. Required only when enable_aks is true."
+variable "vnet_name" {
+  description = "Name of the dev platform virtual network."
   type        = string
-  default     = null
+  default     = "vnet-chatops-guard-dev"
 
   validation {
-    condition     = !var.enable_aks || (var.vnet_subnet_id != null && trimspace(var.vnet_subnet_id) != "")
-    error_message = "vnet_subnet_id must be set to a non-empty subnet resource ID when enable_aks is true."
+    condition     = trimspace(var.vnet_name) != ""
+    error_message = "vnet_name must not be empty."
   }
 }
 
-variable "log_analytics_workspace_id" {
-  description = "Log Analytics workspace resource ID used for AKS monitoring. Required only when enable_aks is true."
-  type        = string
-  default     = null
+variable "vnet_address_space" {
+  description = "Address space for the dev platform virtual network."
+  type        = list(string)
+  default     = ["10.30.0.0/16"]
 
   validation {
-    condition     = !var.enable_aks || (var.log_analytics_workspace_id != null && trimspace(var.log_analytics_workspace_id) != "")
-    error_message = "log_analytics_workspace_id must be set to a non-empty workspace resource ID when enable_aks is true."
+    condition     = length(var.vnet_address_space) > 0 && alltrue([for cidr in var.vnet_address_space : trimspace(cidr) != ""])
+    error_message = "vnet_address_space must contain at least one non-empty CIDR block."
+  }
+}
+
+variable "aks_node_subnet_name" {
+  description = "Name of the subnet used by the AKS node pool."
+  type        = string
+  default     = "snet-aks-nodes"
+
+  validation {
+    condition     = trimspace(var.aks_node_subnet_name) != ""
+    error_message = "aks_node_subnet_name must not be empty."
+  }
+}
+
+variable "aks_node_subnet_prefixes" {
+  description = "Address prefixes for the AKS node subnet."
+  type        = list(string)
+  default     = ["10.30.0.0/24"]
+
+  validation {
+    condition     = length(var.aks_node_subnet_prefixes) > 0 && alltrue([for cidr in var.aks_node_subnet_prefixes : trimspace(cidr) != ""])
+    error_message = "aks_node_subnet_prefixes must contain at least one non-empty CIDR block."
+  }
+}
+
+variable "log_analytics_workspace_name" {
+  description = "Name of the existing Log Analytics workspace used for AKS monitoring."
+  type        = string
+  default     = "log-chatops-guard-dev"
+
+  validation {
+    condition     = trimspace(var.log_analytics_workspace_name) != ""
+    error_message = "log_analytics_workspace_name must not be empty."
+  }
+}
+
+variable "log_analytics_resource_group_name" {
+  description = "Resource group that contains the existing Log Analytics workspace used for AKS monitoring."
+  type        = string
+  default     = "rg-chatops-guard-state"
+
+  validation {
+    condition     = trimspace(var.log_analytics_resource_group_name) != ""
+    error_message = "log_analytics_resource_group_name must not be empty."
   }
 }
 

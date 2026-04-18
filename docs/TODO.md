@@ -22,18 +22,22 @@ This file is a grouped planning view of the current backlog after the recent boo
 - Priority: P1
 - Short summary: Keep bootstrap separate from platform composition while turning the merged AKS module into a staged environment-root path.
 - Estimated effort: 3-5 days
-- Dependencies: final environment-root wiring for network and monitoring inputs, target Azure region and sizing, environment promotion plan
+- Dependencies: final AKS demo-risk decision, target Azure region and sizing, environment promotion plan
 - Tasks:
   - [x] #1 Define minimal AKS module
   - [x] #15 INF-02 · Terraform AKS module (dev) closed by PR #40
+  - [x] #50 INF-06 · First dev-platform Terraform root for staged AKS rollout
   - [x] Scaffold `infra/envs/dev-platform` as the first non-bootstrap environment root for AKS composition
   - [x] Add `enable_aks = false` so the first safe apply can create only the platform resource group
   - [x] Apply `infra/envs/dev-platform` once to create `rg-chatops-guard-platform-dev` without creating AKS
-  - [x] Keep `vnet_subnet_id` and `log_analytics_workspace_id` as explicit injected inputs for now
+  - [x] Add `infra/modules/network` and apply the minimal dev VNet/subnet foundation
+  - [x] Replace the raw subnet input with `module.network.aks_node_subnet_id`
+  - [x] Replace the raw Log Analytics workspace ID input with a workspace lookup by name and resource group
   - [x] Add `terraform.tfvars.example` so the safe-first-apply path and first AKS-enable path are both visible
-  - [ ] Fill in the real `vnet_subnet_id` and `log_analytics_workspace_id` values before the first `enable_aks = true` apply
-  - [ ] Decide later whether those dependencies should stay injected inputs or move behind sibling modules/data sources
-  - [ ] Keep AKS design decisions explicit: subnet, egress, admin access path, private-cluster timing
+  - [x] Produce the first real `enable_aks = true` AKS plan successfully
+  - [ ] Decide whether the first real AKS apply belongs in PR #51 or the immediate follow-up PR
+  - [ ] Set `api_server_authorized_ip_ranges` for the demo cluster before the first apply if API restriction is desired from day one
+  - [ ] Keep AKS design decisions explicit: egress, admin access path, private-cluster timing
   - [ ] #16 INF-03 · Event Grid + Topic
   - [ ] #17 INF-04 · Azure OpenAI (private endpoint)
   - [ ] #18 INF-05 · Key Vault + Workload Identity

@@ -14,8 +14,9 @@ The repository already has a live `dev` Terraform layout under `infra/envs/dev` 
 - `infra/envs/dev` currently manages remote-state bootstrap resources and now successfully plans/applies again after the bootstrap resources were imported into state and the storage diagnostics scope was corrected.
 - `infra/envs/prod` exists as a placeholder.
 - `infra/modules/aks` now exists as the first reusable module, delivered by issue `#1` and PR `#40`.
-- `infra/envs/dev-platform` now exists as the first thin non-bootstrap environment root that composes the AKS module without changing the live bootstrap root.
-- That root now has its own backend/state and has been safely applied once to create only the platform resource group while `enable_aks = false` keeps cluster creation off by default.
+- `infra/modules/network` now exists as a sibling module for the minimal dev VNet/subnet foundation.
+- `infra/envs/dev-platform` now exists as the first thin non-bootstrap environment root that composes both modules without changing the live bootstrap root.
+- That root now has its own backend/state, has been safely applied for the platform resource group and network foundation, and can produce a real `enable_aks = true` cluster plan while `enable_aks = false` still keeps cluster creation off by default.
 
 ## Decision
 
@@ -29,6 +30,7 @@ infra/
       prod/
   modules/
     aks/
+    network/
     acr/
     event-grid/
     key-vault/
@@ -79,8 +81,8 @@ Why the name is explicit right now:
 
 ## Next safe step after that scaffold
 
-Keep the first real `dev-platform` rollout on explicit injected inputs for the node-subnet ID and Log Analytics workspace ID. The repo now documents that contract in `infra/envs/dev-platform/terraform.tfvars.example`.
+The network side is now handled by `infra/modules/network`, and the monitoring side is resolved through an explicit Log Analytics workspace lookup from the existing bootstrap resources.
 
-Then fill in the real values before any first `enable_aks = true` AKS plan/apply.
+That means the next real decision is no longer wiring but rollout intent: whether the first `enable_aks = true` apply belongs in this PR or in the immediate follow-up once demo-time API access restrictions are set.
 
 That keeps the already-applied `dev` state stable while moving AKS work from module-only scaffolding toward real environment composition.

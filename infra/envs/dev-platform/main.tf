@@ -15,13 +15,29 @@ resource "azurerm_resource_group" "platform" {
   tags     = local.tags
 }
 
+module "network" {
+  source = "../../modules/network"
+
+  resource_group_name      = azurerm_resource_group.platform.name
+  location                 = azurerm_resource_group.platform.location
+  vnet_name                = var.vnet_name
+  vnet_address_space       = var.vnet_address_space
+  aks_node_subnet_name     = var.aks_node_subnet_name
+  aks_node_subnet_prefixes = var.aks_node_subnet_prefixes
+  tags                     = local.tags
+}
+
+data "azurerm_log_analytics_workspace" "logs" {
+  name                = var.log_analytics_workspace_name
+  resource_group_name = var.log_analytics_resource_group_name
+}
+
 # This root is intentionally thin. It owns the environment-level composition
 # and passes shared dependencies in as inputs instead of reaching back into the
 # live bootstrap root.
 #
 # Keep AKS behind an explicit feature flag so the first safe apply can create
-# only the platform resource group before network and monitoring dependencies
-# are fully wired.
+# only the platform resource group and network foundation before the cluster is enabled.
 module "aks" {
   count  = var.enable_aks ? 1 : 0
   source = "../../modules/aks"
@@ -34,7 +50,7 @@ module "aks" {
   kubernetes_version = var.kubernetes_version
   node_count         = var.node_count
   node_vm_size       = var.node_vm_size
-  vnet_subnet_id     = var.vnet_subnet_id
+  vnet_subnet_id     = module.network.aks_node_subnet_id
 
   private_cluster_enabled         = false
   automatic_upgrade_channel       = "patch"
@@ -45,6 +61,6 @@ module "aks" {
   outbound_type                   = "loadBalancer"
   api_server_authorized_ip_ranges = var.api_server_authorized_ip_ranges
 
-  log_analytics_workspace_id = var.log_analytics_workspace_id
+  log_analytics_workspace_id = data.azurerm_log_analytics_workspace.logs.id
   tags                       = local.tags
 }

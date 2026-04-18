@@ -10,7 +10,8 @@
 - The `dev` remote state is aligned with Azure again after importing the pre-existing bootstrap resources and correcting the storage diagnostics scope.
 - `infra/envs/prod` remains a dormant placeholder.
 - `infra/modules/aks` exists as the first reusable platform module.
-- `infra/envs/dev-platform` is the first thin non-bootstrap platform root that composes it. It now has its own backend/state and has been safely applied once to create only `rg-chatops-guard-platform-dev`, while AKS remains disabled by default.
+- `infra/modules/network` now exists as a sibling module for the minimal VNet/subnet foundation.
+- `infra/envs/dev-platform` is the first thin non-bootstrap platform root that composes both modules. It now has its own backend/state, has safely applied `rg-chatops-guard-platform-dev` plus the first VNet/subnet foundation, and can produce a real `enable_aks = true` AKS plan while AKS remains disabled by default.
 
 ## CI/CD Flow
 1. `tf-plan-apply` workflow (GitHub Actions) runs in matrix mode over `TF_TARGET_ENVS` (defaults to `["dev"]`).
@@ -40,22 +41,22 @@
 ## Next Steps
 1. Close stale issue hygiene for delivered workflow/bootstrap work if GitHub has not already caught up, especially issue `#43`.
 2. Keep AKS disabled in `infra/envs/dev`; the bootstrap root should not silently grow into the long-term platform root.
-3. Keep `vnet_subnet_id` and `log_analytics_workspace_id` as explicit injected inputs for now, and use `terraform.tfvars.example` as the contract for the first real cluster rollout.
-4. Fill in the real dependency values before the first `enable_aks = true` plan/apply.
-5. Only after that, flip `enable_aks` on deliberately and plan the first real cluster rollout.
+3. Keep AKS disabled by default until PR #51 is reviewed and the demo-risk tradeoff is accepted.
+4. Decide whether the first real AKS apply in dev should happen in this PR or as the immediate follow-up after merge.
+5. Before the first apply, set `api_server_authorized_ip_ranges` to your stable public IP if you want the demo cluster API restricted from day one.
 6. Then revisit additional dev hardening upgrades such as SAS policy, CMK, private endpoints, or GRS.
 
 ## ROI Priority Order (2026-04-16)
 
 ### Recommendation
 - Treat bootstrap/state recovery and the recent workflow cleanup as done unless drift or apply proves otherwise.
-- Treat the next AKS slice as staged environment-composition work on `infra/envs/dev-platform`: first the guarded root and platform RG, then dependency wiring, and only then a real cluster apply.
+- Treat the next AKS slice as staged environment-composition work on `infra/envs/dev-platform`: guarded root, platform RG, minimal network foundation, first real AKS plan, and only then a deliberate cluster apply.
 - Use issue `#12` as the architecture anchor until a dedicated follow-up AKS env-root issue exists.
 - Use umbrella issues such as `#2` and `#13` for tracking only; do not let them outrank the scoped implementation work.
 
 ### Highest ROI / lowest direct cloud cost
-1. Turn reusable Terraform into the first thin platform root and finish its input wiring before provisioning a real cluster:
-   - `#12` plus the AKS env-root wiring follow-up
+1. Finish the staged dev-platform rollout path and decide whether to run the first real AKS apply:
+   - `#12` plus `#50`
 2. Improve supply-chain and project automation with mostly engineering time, not cloud spend:
    - `#28`, `#30`, `#38`, `#39`
 3. Close stale issue hygiene for recently delivered work:
@@ -76,8 +77,8 @@
 ## Suggested Sequence
 1. Reconcile issue hygiene for delivered infra and workflow work (`#1`, `#14`, `#15`, `#43`).
 2. Keep AKS work on `infra/envs/dev-platform` instead of adding more module-only hardening or mixing platform resources into `infra/envs/dev`.
-3. Keep the first real dev platform root on explicit injected network and monitoring inputs for now, documented in `terraform.tfvars.example`.
-4. Fill in the real dependency values.
-5. Only after that, flip `enable_aks` on and plan the first real cluster rollout.
+3. Use the new `infra/modules/network` foundation and the existing Log Analytics workspace lookup as the demo-ready dependency path.
+4. Decide whether the first real AKS apply should land in PR #51 or the immediate next PR.
+5. Set demo-safe API access restrictions before the first apply if needed.
 6. Keep docs aligned with the actual branch and merge state so planning does not outrun code again.
 7. Then return to the smallest application skeleton work.
