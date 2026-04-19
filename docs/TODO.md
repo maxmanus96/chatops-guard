@@ -46,6 +46,7 @@ This file is a grouped planning view of the current backlog after the recent boo
   - [x] Wire the dedicated Entra admin group into the AKS Terraform path
   - [x] Keep Azure RBAC out of the first Entra slice so scope stays on managed authentication plus disabling local accounts
   - [ ] Apply and verify the managed Entra update against the live dev AKS cluster
+  - [ ] #57 Reduce dev-platform AKS demo node cost before tracked rollout
   - [ ] Keep AKS design decisions explicit: egress, admin access path, private-cluster timing
   - [ ] #16 INF-03 · Event Grid + Topic
   - [ ] #17 INF-04 · Azure OpenAI (private endpoint)

@@ -61,9 +61,9 @@ variable "node_count" {
 }
 
 variable "node_vm_size" {
-  description = "VM size for the first dev system pool."
+  description = "VM size for the first dev system pool. D2as_v5 is the current cost-aware default because it is materially cheaper than D2_v2 while keeping more memory headroom than the absolute-cheapest A2_v2 candidate."
   type        = string
-  default     = "Standard_D2_v2"
+  default     = "Standard_D2as_v5"
 }
 
 variable "vnet_name" {
