@@ -52,6 +52,9 @@ module "aks" {
   node_vm_size       = var.node_vm_size
   vnet_subnet_id     = module.network.aks_node_subnet_id
 
+  # Keep local accounts enabled for the first demo cluster. Disabling them now
+  # would require managed AAD integration, which is a later hardening slice.
+  local_account_disabled          = false
   private_cluster_enabled         = false
   automatic_upgrade_channel       = "patch"
   network_plugin                  = "azure"

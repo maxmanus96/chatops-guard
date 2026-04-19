@@ -93,6 +93,12 @@ variable "sku_tier" {
   }
 }
 
+variable "local_account_disabled" {
+  description = "Whether local AKS admin accounts should be disabled. On Kubernetes 1.25+ this requires managed AAD integration, so the demo default stays false until that slice exists."
+  type        = bool
+  default     = false
+}
+
 variable "private_cluster_enabled" {
   description = "Whether the AKS API server should only be exposed on private IP addresses."
   type        = bool

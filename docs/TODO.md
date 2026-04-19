@@ -35,8 +35,12 @@ This file is a grouped planning view of the current backlog after the recent boo
   - [x] Replace the raw Log Analytics workspace ID input with a workspace lookup by name and resource group
   - [x] Add `terraform.tfvars.example` so the safe-first-apply path and first AKS-enable path are both visible
   - [x] Produce the first real `enable_aks = true` AKS plan successfully
-  - [ ] Decide whether the first real AKS apply belongs in PR #51 or the immediate follow-up PR
-  - [ ] Set `api_server_authorized_ip_ranges` for the demo cluster before the first apply if API restriction is desired from day one
+  - [x] Keep the first AKS rollout local-first with an untracked `infra/envs/dev-platform/terraform.tfvars`
+  - [x] Set `api_server_authorized_ip_ranges` locally before the first apply; `enable_aks = true` now requires it
+  - [x] Keep `local_account_disabled = false` for the first demo cluster until managed AAD integration exists
+  - [x] Prove the first local `enable_aks = true` apply from `infra/envs/dev-platform`
+  - [ ] Add `dev-platform` to GitHub validation in a follow-up CI PR after the local AKS rollout is proven
+  - [ ] #52 INF-07 · AKS managed Entra ID integration and disable local accounts
   - [ ] Keep AKS design decisions explicit: egress, admin access path, private-cluster timing
   - [ ] #16 INF-03 · Event Grid + Topic
   - [ ] #17 INF-04 · Azure OpenAI (private endpoint)

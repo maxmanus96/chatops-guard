@@ -24,7 +24,8 @@ log_analytics_resource_group_name   = "rg-chatops-guard-state"
 # When you are ready for the first real AKS plan/apply:
 # 1. change enable_aks to true
 # 2. keep the network defaults or adjust them deliberately
-# 3. add your stable public IP as a /32 if you want demo-time API access restriction
+# 3. add your stable public IP as a /32 because this root now requires
+#    api_server_authorized_ip_ranges when AKS is enabled
 #
 # enable_aks = true
 # api_server_authorized_ip_ranges = [

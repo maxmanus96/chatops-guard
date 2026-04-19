@@ -17,6 +17,9 @@ The repository already has a live `dev` Terraform layout under `infra/envs/dev` 
 - `infra/modules/network` now exists as a sibling module for the minimal dev VNet/subnet foundation.
 - `infra/envs/dev-platform` now exists as the first thin non-bootstrap environment root that composes both modules without changing the live bootstrap root.
 - That root now has its own backend/state, has been safely applied for the platform resource group and network foundation, and can produce a real `enable_aks = true` cluster plan while `enable_aks = false` still keeps cluster creation off by default.
+- When `enable_aks = true`, the root now also requires explicit `api_server_authorized_ip_ranges` so the first public dev cluster does not accidentally expose its API to the world.
+- The first AKS rollout path is intentionally local-first: a local untracked `infra/envs/dev-platform/terraform.tfvars` can enable AKS and carry the operator's `/32` admin IP without turning that machine-specific data into a repo default.
+- The first demo AKS rollout keeps local accounts enabled for now. Disabling them is deferred into issue `#52` because AKS rejects that setting on Kubernetes 1.25+ clusters without managed AAD / Entra ID integration.
 
 ## Decision
 
@@ -83,6 +86,8 @@ Why the name is explicit right now:
 
 The network side is now handled by `infra/modules/network`, and the monitoring side is resolved through an explicit Log Analytics workspace lookup from the existing bootstrap resources.
 
-That means the next real decision is no longer wiring but rollout intent: whether the first `enable_aks = true` apply belongs in this PR or in the immediate follow-up once demo-time API access restrictions are set.
+That local rollout proof is now done. The next real decisions are:
+- add `infra/envs/dev-platform` to GitHub validation as a focused follow-up CI slice
+- handle managed Entra ID integration in issue `#52`
 
 That keeps the already-applied `dev` state stable while moving AKS work from module-only scaffolding toward real environment composition.

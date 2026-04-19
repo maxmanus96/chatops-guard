@@ -141,6 +141,11 @@ variable "api_server_authorized_ip_ranges" {
     condition     = alltrue([for cidr in var.api_server_authorized_ip_ranges : trimspace(cidr) != ""])
     error_message = "api_server_authorized_ip_ranges must not contain empty values."
   }
+
+  validation {
+    condition     = !var.enable_aks || length(var.api_server_authorized_ip_ranges) > 0
+    error_message = "api_server_authorized_ip_ranges must be set when enable_aks is true so the first public AKS API is not left unrestricted by accident."
+  }
 }
 
 variable "tags" {
