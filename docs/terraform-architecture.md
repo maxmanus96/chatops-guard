@@ -19,6 +19,7 @@ The repository already has a live `dev` Terraform layout under `infra/envs/dev` 
 - That root now has its own backend/state, has been safely applied for the platform resource group and network foundation, and can produce a real `enable_aks = true` cluster plan while `enable_aks = false` still keeps cluster creation off by default.
 - When `enable_aks = true`, the root now also requires explicit `api_server_authorized_ip_ranges` so the first public dev cluster does not accidentally expose its API to the world.
 - The first AKS rollout path is intentionally local-first: a local untracked `infra/envs/dev-platform/terraform.tfvars` can enable AKS and carry the operator's `/32` admin IP without turning that machine-specific data into a repo default.
+- The current cost-aware AKS demo default is `Standard_D2as_v5`. B-series was not chosen because Microsoft documents it as unsupported for system node pools, and `A2_v2` was not chosen as the default because the lower memory headroom is a weaker fit for a one-node demo cluster with system addons.
 - The first demo AKS rollout keeps local accounts enabled for now. Disabling them is deferred into issue `#52` because AKS rejects that setting on Kubernetes 1.25+ clusters without managed AAD / Entra ID integration.
 
 ## Decision

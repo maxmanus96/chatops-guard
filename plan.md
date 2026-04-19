@@ -14,6 +14,7 @@
 - `infra/envs/dev-platform` is the first thin non-bootstrap platform root that composes both modules. It now has its own backend/state, has safely applied `rg-chatops-guard-platform-dev` plus the first VNet/subnet foundation, and has already completed the first local `enable_aks = true` AKS apply with a clean post-apply plan.
 - `infra/envs/dev-platform` now also requires `api_server_authorized_ip_ranges` when `enable_aks = true`, so the first public dev AKS apply does not expose the API server broadly by accident.
 - The first AKS rollout path is local-first: use an untracked `infra/envs/dev-platform/terraform.tfvars` for `enable_aks = true` plus a local `/32` admin IP. `dev-platform` is still intentionally outside GitHub `tf-plan-apply` for now.
+- The current cost-aware AKS demo default is `Standard_D2as_v5`, not `Standard_D2_v2`. That is the best-ROI middle ground so far: materially cheaper than Dv2, more modern, and less memory-constrained than the ultra-cheap `A2_v2` candidate.
 - The first demo AKS rollout keeps local accounts enabled for now; disabling them is deferred into issue `#52` because AKS rejects `disableLocalAccounts=true` on Kubernetes 1.25+ clusters without managed AAD / Entra ID integration.
 
 ## CI/CD Flow

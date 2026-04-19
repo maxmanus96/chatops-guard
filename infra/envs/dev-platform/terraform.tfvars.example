@@ -9,7 +9,7 @@ location                     = "westeurope"
 cluster_name                 = "aks-dev-guard"
 dns_prefix                   = "aks-dev-guard"
 node_count                   = 1
-node_vm_size                 = "Standard_D2_v2"
+node_vm_size                 = "Standard_D2as_v5"
 
 # Minimal dev network slice managed by this root.
 vnet_name                = "vnet-chatops-guard-dev"
@@ -26,6 +26,12 @@ log_analytics_resource_group_name   = "rg-chatops-guard-state"
 # 2. keep the network defaults or adjust them deliberately
 # 3. add your stable public IP as a /32 because this root now requires
 #    api_server_authorized_ip_ranges when AKS is enabled
+#
+# Cost note:
+# - B-series looks cheap but is not supported for AKS system node pools.
+# - A2_v2 is cheaper than D2as_v5, but it leaves much less memory headroom for
+#   a one-node demo cluster that also runs system components, monitoring, and policy addons.
+# - D2as_v5 is the current best-ROI default for this repo's demo path.
 #
 # enable_aks = true
 # api_server_authorized_ip_ranges = [
