@@ -13,8 +13,10 @@
 - `infra/modules/network` now exists as a sibling module for the minimal VNet/subnet foundation.
 - `infra/envs/dev-platform` is the first thin non-bootstrap platform root that composes both modules. It now has its own backend/state, has safely applied `rg-chatops-guard-platform-dev` plus the first VNet/subnet foundation, and has already completed the first local `enable_aks = true` AKS apply with a clean post-apply plan.
 - `infra/envs/dev-platform` now also requires `api_server_authorized_ip_ranges` when `enable_aks = true`, so the first public dev AKS apply does not expose the API server broadly by accident.
-- The first AKS rollout path is local-first: use an untracked `infra/envs/dev-platform/terraform.tfvars` for `enable_aks = true` plus a local `/32` admin IP. `dev-platform` is still intentionally outside GitHub `tf-plan-apply` for now.
-- The first demo AKS rollout keeps local accounts enabled for now; disabling them is deferred into issue `#52` because AKS rejects `disableLocalAccounts=true` on Kubernetes 1.25+ clusters without managed AAD / Entra ID integration.
+- The first AKS rollout path was local-first: use an untracked `infra/envs/dev-platform/terraform.tfvars` for `enable_aks = true` plus a local `/32` admin IP. That proof is now done, and `dev-platform` participates in GitHub `tf-plan-apply`.
+- The first demo AKS rollout originally kept local accounts enabled because disabling them on Kubernetes 1.25+ requires managed Entra / AAD integration. Issue `#52` is the slice that now wires managed Entra into Terraform so `local_account_disabled = true` becomes a valid next apply.
+- For issue `#52`, the chosen access model is a dedicated Entra admin group, not an individual user object ID. That keeps AKS admin access transferable, reviewable, and easier to explain than binding cluster admin access to one person.
+- Issue `#52` keeps `azure_rbac_enabled = false` in the first managed Entra slice. That is intentional: the smallest useful change is authentication hardening plus disabling local accounts; Azure RBAC role design is a separate authorization rollout.
 
 ## CI/CD Flow
 1. `tf-plan-apply` workflow (GitHub Actions) runs in matrix mode over `TF_TARGET_ENVS` (defaults to `["dev","dev-platform"]`).

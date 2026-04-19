@@ -41,6 +41,11 @@ This file is a grouped planning view of the current backlog after the recent boo
   - [x] Prove the first local `enable_aks = true` apply from `infra/envs/dev-platform`
   - [x] Add `dev-platform` GitHub validation/plan-apply follow-up issue `#53`
   - [ ] #52 INF-07 · AKS managed Entra ID integration and disable local accounts
+  - [x] Choose a dedicated Entra admin group instead of a personal user object for AKS admin access
+  - [x] Create the dev demo admin group `grp-chatops-guard-aks-admins-dev` and add the current operator to it
+  - [x] Wire the dedicated Entra admin group into the AKS Terraform path
+  - [x] Keep Azure RBAC out of the first Entra slice so scope stays on managed authentication plus disabling local accounts
+  - [ ] Apply and verify the managed Entra update against the live dev AKS cluster
   - [ ] Keep AKS design decisions explicit: egress, admin access path, private-cluster timing
   - [ ] #16 INF-03 · Event Grid + Topic
   - [ ] #17 INF-04 · Azure OpenAI (private endpoint)
