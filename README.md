@@ -115,7 +115,9 @@ Configuration details and examples will be documented as features are implemente
   - the state storage account and `tfstate` container
   - the Log Analytics workspace used for storage diagnostics
   - the blob-service diagnostic setting that sends storage logs/metrics to Log Analytics
-- `infra/modules/aks` now exists as the first reusable platform module, but it is still not wired into a non-bootstrap environment root and does not create a real AKS cluster yet.
+- `infra/modules/aks` now exists as the first reusable platform module, and `infra/envs/dev-platform` is the first thin non-bootstrap root that composes it. That root now has its own backend/state, has safely applied `rg-chatops-guard-platform-dev` plus a minimal VNet/subnet foundation, and can produce a real `enable_aks = true` plan while AKS still stays explicitly gated by default. When AKS is enabled there, `api_server_authorized_ip_ranges` must also be set so the first demo cluster does not leave its public API open unintentionally.
+- The first AKS rollout path is intentionally local-first: use an untracked `infra/envs/dev-platform/terraform.tfvars` for `enable_aks = true` and your local `/32` admin IP. `dev-platform` is not in GitHub `tf-plan-apply` yet, by design.
+- The first demo AKS cluster keeps local accounts enabled for now because disabling them on Kubernetes 1.25+ requires managed AAD integration. That hardening step is now tracked in issue `#52` until the Entra ID/RBAC slice is introduced.
 - Production definitions exist but remain dormant until explicitly enabled via GitHub Actions `TF_TARGET_ENVS`.
 - GitHub Actions workflow `.github/workflows/tf-plan-apply.yaml` uses a matrix to run `plan/apply` per environment while scoping Terraform commands to `infra/envs/<env>` so prod is untouched unless opted in.
 - Security posture for the dev state storage account balances CI access with cost:

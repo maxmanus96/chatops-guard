@@ -13,7 +13,7 @@ resource "azurerm_kubernetes_cluster" "this" {
   kubernetes_version        = var.kubernetes_version
   sku_tier                  = var.sku_tier
   azure_policy_enabled      = true
-  local_account_disabled    = true
+  local_account_disabled    = var.local_account_disabled
   private_cluster_enabled   = var.private_cluster_enabled
   automatic_upgrade_channel = var.automatic_upgrade_channel
 
@@ -36,6 +36,14 @@ resource "azurerm_kubernetes_cluster" "this" {
     vm_size        = var.node_vm_size
     max_pods       = 50
     vnet_subnet_id = var.vnet_subnet_id
+
+    # Make the provider/Azure defaults explicit so the first applied cluster
+    # does not keep showing an in-place node pool diff on the next plan.
+    upgrade_settings {
+      max_surge                     = "10%"
+      drain_timeout_in_minutes      = 0
+      node_soak_duration_in_minutes = 0
+    }
   }
 
   network_profile {

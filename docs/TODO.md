@@ -20,14 +20,28 @@ This file is a grouped planning view of the current backlog after the recent boo
 
 ### AKS and platform services baseline
 - Priority: P1
-- Short summary: Move from the now-stable state bootstrap toward the first real platform components needed to host the application.
+- Short summary: Keep bootstrap separate from platform composition while turning the merged AKS module into a staged environment-root path.
 - Estimated effort: 3-5 days
-- Dependencies: final Terraform environment-root shape, target Azure region and sizing, environment promotion plan
+- Dependencies: final AKS demo-risk decision, target Azure region and sizing, environment promotion plan
 - Tasks:
   - [x] #1 Define minimal AKS module
-  - [ ] #15 INF-02 · Terraform AKS module (dev)
-  - [ ] Decide the first non-bootstrap env-root shape that will eventually call `infra/modules/aks`
-  - [ ] Keep AKS design decisions explicit: subnet, egress, admin access path, private-cluster timing
+  - [x] #15 INF-02 · Terraform AKS module (dev) closed by PR #40
+  - [x] #50 INF-06 · First dev-platform Terraform root for staged AKS rollout
+  - [x] Scaffold `infra/envs/dev-platform` as the first non-bootstrap environment root for AKS composition
+  - [x] Add `enable_aks = false` so the first safe apply can create only the platform resource group
+  - [x] Apply `infra/envs/dev-platform` once to create `rg-chatops-guard-platform-dev` without creating AKS
+  - [x] Add `infra/modules/network` and apply the minimal dev VNet/subnet foundation
+  - [x] Replace the raw subnet input with `module.network.aks_node_subnet_id`
+  - [x] Replace the raw Log Analytics workspace ID input with a workspace lookup by name and resource group
+  - [x] Add `terraform.tfvars.example` so the safe-first-apply path and first AKS-enable path are both visible
+  - [x] Produce the first real `enable_aks = true` AKS plan successfully
+  - [x] Keep the first AKS rollout local-first with an untracked `infra/envs/dev-platform/terraform.tfvars`
+  - [x] Set `api_server_authorized_ip_ranges` locally before the first apply; `enable_aks = true` now requires it
+  - [x] Keep `local_account_disabled = false` for the first demo cluster until managed AAD integration exists
+  - [x] Prove the first local `enable_aks = true` apply from `infra/envs/dev-platform`
+  - [ ] Add `dev-platform` to GitHub validation in a follow-up CI PR after the local AKS rollout is proven
+  - [ ] #52 INF-07 · AKS managed Entra ID integration and disable local accounts
+  - [ ] Keep AKS design decisions explicit: egress, admin access path, private-cluster timing
   - [ ] #16 INF-03 · Event Grid + Topic
   - [ ] #17 INF-04 · Azure OpenAI (private endpoint)
   - [ ] #18 INF-05 · Key Vault + Workload Identity

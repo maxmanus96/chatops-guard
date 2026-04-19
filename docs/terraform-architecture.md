@@ -13,7 +13,13 @@ The repository already has a live `dev` Terraform layout under `infra/envs/dev` 
 - `infra/envs/dev` is the active Terraform root.
 - `infra/envs/dev` currently manages remote-state bootstrap resources and now successfully plans/applies again after the bootstrap resources were imported into state and the storage diagnostics scope was corrected.
 - `infra/envs/prod` exists as a placeholder.
-- `infra/modules/aks` now exists as the first reusable module, but it is not wired into a non-bootstrap environment root yet.
+- `infra/modules/aks` now exists as the first reusable module, delivered by issue `#1` and PR `#40`.
+- `infra/modules/network` now exists as a sibling module for the minimal dev VNet/subnet foundation.
+- `infra/envs/dev-platform` now exists as the first thin non-bootstrap environment root that composes both modules without changing the live bootstrap root.
+- That root now has its own backend/state, has been safely applied for the platform resource group and network foundation, and can produce a real `enable_aks = true` cluster plan while `enable_aks = false` still keeps cluster creation off by default.
+- When `enable_aks = true`, the root now also requires explicit `api_server_authorized_ip_ranges` so the first public dev cluster does not accidentally expose its API to the world.
+- The first AKS rollout path is intentionally local-first: a local untracked `infra/envs/dev-platform/terraform.tfvars` can enable AKS and carry the operator's `/32` admin IP without turning that machine-specific data into a repo default.
+- The first demo AKS rollout keeps local accounts enabled for now. Disabling them is deferred into issue `#52` because AKS rejects that setting on Kubernetes 1.25+ clusters without managed AAD / Entra ID integration.
 
 ## Decision
 
@@ -27,6 +33,7 @@ infra/
       prod/
   modules/
     aks/
+    network/
     acr/
     event-grid/
     key-vault/
@@ -68,6 +75,19 @@ Until a migration is planned, treat the current `infra/envs/dev` directory as th
 
 ## Current safe next step
 
-Design the first non-bootstrap environment root that will eventually call `infra/modules/aks`, without changing the current `infra/envs/dev` backend/bootstrap layout.
+That step is now done: `infra/envs/dev-platform` is the first thin non-bootstrap environment root that composes the AKS module while leaving `infra/envs/dev` bootstrap-only.
+
+Why the name is explicit right now:
+
+- `infra/envs/dev` is still the live bootstrap root
+- `infra/envs/dev-platform` makes the platform boundary visible until there is an explicit bootstrap migration plan
+
+## Next safe step after that scaffold
+
+The network side is now handled by `infra/modules/network`, and the monitoring side is resolved through an explicit Log Analytics workspace lookup from the existing bootstrap resources.
+
+That local rollout proof is now done. The next real decisions are:
+- add `infra/envs/dev-platform` to GitHub validation as a focused follow-up CI slice
+- handle managed Entra ID integration in issue `#52`
 
 That keeps the already-applied `dev` state stable while moving AKS work from module-only scaffolding toward real environment composition.

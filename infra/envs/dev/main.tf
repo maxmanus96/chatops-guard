@@ -1,4 +1,5 @@
-# Example only: keep disabled until a later ticket wires the AKS module into a non-bootstrap root.
+# Example only: keep disabled here because this root stays bootstrap-only.
+# The first real AKS wiring now lives under infra/envs/dev-platform.
 # module "aks" {
 #   source              = "../../modules/aks"
 #   cluster_name        = "aks-dev-guard"

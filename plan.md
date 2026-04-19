@@ -9,7 +9,12 @@
   - blob-service diagnostics for the state account
 - The `dev` remote state is aligned with Azure again after importing the pre-existing bootstrap resources and correcting the storage diagnostics scope.
 - `infra/envs/prod` remains a dormant placeholder.
-- `infra/modules/aks` exists as the first reusable platform module, but it is still not wired into a non-bootstrap environment root. That makes issue `#15` the real infrastructure next step, not more bootstrap repair.
+- `infra/modules/aks` exists as the first reusable platform module.
+- `infra/modules/network` now exists as a sibling module for the minimal VNet/subnet foundation.
+- `infra/envs/dev-platform` is the first thin non-bootstrap platform root that composes both modules. It now has its own backend/state, has safely applied `rg-chatops-guard-platform-dev` plus the first VNet/subnet foundation, and can produce a real `enable_aks = true` AKS plan while AKS remains disabled by default.
+- `infra/envs/dev-platform` now also requires `api_server_authorized_ip_ranges` when `enable_aks = true`, so the first public dev AKS apply does not expose the API server broadly by accident.
+- The first AKS rollout path is local-first: use an untracked `infra/envs/dev-platform/terraform.tfvars` for `enable_aks = true` plus a local `/32` admin IP. `dev-platform` is still intentionally outside GitHub `tf-plan-apply` for now.
+- The first demo AKS rollout keeps local accounts enabled for now; disabling them is deferred into issue `#52` because AKS rejects `disableLocalAccounts=true` on Kubernetes 1.25+ clusters without managed AAD / Entra ID integration.
 
 ## CI/CD Flow
 1. `tf-plan-apply` workflow (GitHub Actions) runs in matrix mode over `TF_TARGET_ENVS` (defaults to `["dev"]`).
@@ -38,24 +43,27 @@
 
 ## Next Steps
 1. Close stale issue hygiene for delivered workflow/bootstrap work if GitHub has not already caught up, especially issue `#43`.
-2. Continue issue `#15` by designing the first non-bootstrap environment wiring for AKS. Do not apply AKS in `dev` yet; decide the env-root shape first.
-3. Keep AKS disabled in `infra/envs/dev`; the bootstrap root should not silently grow into the long-term platform root.
-4. Only after the AKS env-root decision is settled, revisit additional dev hardening upgrades such as SAS policy, CMK, private endpoints, or GRS.
+2. Keep AKS disabled in `infra/envs/dev`; the bootstrap root should not silently grow into the long-term platform root.
+3. Keep AKS disabled by default until PR #51 is reviewed and the demo-risk tradeoff is accepted.
+4. Open a focused follow-up CI PR to add `dev-platform` to GitHub validation first, and only then decide whether to add it to `tf-plan-apply`.
+5. Track managed Entra ID integration and `disableLocalAccounts=true` under issue `#52`.
+6. Then revisit additional dev hardening upgrades such as SAS policy, CMK, private endpoints, or GRS.
 
 ## ROI Priority Order (2026-04-16)
 
 ### Recommendation
 - Treat bootstrap/state recovery and the recent workflow cleanup as done unless drift or apply proves otherwise.
-- Keep AKS work on issue `#15` focused on environment wiring and explicit design decisions, not on provisioning a real cluster yet.
+- Treat the next AKS slice as staged environment-composition work on `infra/envs/dev-platform`: guarded root, platform RG, minimal network foundation, first real AKS plan, and only then a deliberate cluster apply.
+- Use issue `#12` as the architecture anchor until a dedicated follow-up AKS env-root issue exists.
 - Use umbrella issues such as `#2` and `#13` for tracking only; do not let them outrank the scoped implementation work.
 
 ### Highest ROI / lowest direct cloud cost
-1. Continue reusable Terraform without provisioning more Azure resources:
-   - `#15`
+1. Finish the staged dev-platform rollout path and transition it into GitHub validation:
+   - `#12` plus `#50`
 2. Improve supply-chain and project automation with mostly engineering time, not cloud spend:
    - `#28`, `#30`, `#38`, `#39`
 3. Close stale issue hygiene for recently delivered work:
-   - `#1`, `#43`
+   - `#1`, `#15`, `#43`
 
 ### Medium ROI / moderate setup cost
 4. Complete delivery plumbing once images and charts exist:
@@ -70,7 +78,11 @@
    - `#23`, `#25`, `#26`, `#37`
 
 ## Suggested Sequence
-1. Reconcile issue hygiene for delivered infra and workflow work (`#1`, `#14`, `#43`).
-2. Resume AKS design from the environment-wiring side instead of adding more skeleton-only hardening.
-3. Keep docs aligned with the actual branch and merge state so planning does not outrun code again.
-4. Then return to the smallest application skeleton work.
+1. Reconcile issue hygiene for delivered infra and workflow work (`#1`, `#14`, `#15`, `#43`).
+2. Keep AKS work on `infra/envs/dev-platform` instead of adding more module-only hardening or mixing platform resources into `infra/envs/dev`.
+3. Use the new `infra/modules/network` foundation and the existing Log Analytics workspace lookup as the demo-ready dependency path.
+4. Keep PR #51 focused on the root/network/monitoring contract and the now-proven local AKS rollout.
+5. Add `dev-platform` to GitHub validation in a follow-up CI PR.
+6. Handle managed Entra ID integration and local-account hardening in issue `#52`.
+7. Keep docs aligned with the actual branch and merge state so planning does not outrun code again.
+8. Then return to the smallest application skeleton work.
