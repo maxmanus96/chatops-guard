@@ -26,8 +26,13 @@ log_analytics_resource_group_name   = "rg-chatops-guard-state"
 # 2. keep the network defaults or adjust them deliberately
 # 3. add your stable public IP as a /32 because this root now requires
 #    api_server_authorized_ip_ranges when AKS is enabled
+# 4. keep using a dedicated Entra admin group object ID, not a personal user
+#    object ID, so AKS admin access stays transferable and reviewable
 #
 # enable_aks = true
 # api_server_authorized_ip_ranges = [
 #   "203.0.113.10/32",
+# ]
+# entra_admin_group_object_ids = [
+#   "00000000-0000-0000-0000-000000000000",
 # ]

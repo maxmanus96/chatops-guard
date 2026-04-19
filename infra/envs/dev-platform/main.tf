@@ -32,6 +32,8 @@ data "azurerm_log_analytics_workspace" "logs" {
   resource_group_name = var.log_analytics_resource_group_name
 }
 
+data "azurerm_client_config" "current" {}
+
 # This root is intentionally thin. It owns the environment-level composition
 # and passes shared dependencies in as inputs instead of reaching back into the
 # live bootstrap root.
@@ -52,9 +54,14 @@ module "aks" {
   node_vm_size       = var.node_vm_size
   vnet_subnet_id     = module.network.aks_node_subnet_id
 
-  # Keep local accounts enabled for the first demo cluster. Disabling them now
-  # would require managed AAD integration, which is a later hardening slice.
-  local_account_disabled          = false
+  # For issue #52, move to managed Entra ID with a dedicated admin group.
+  # Keep Azure RBAC itself out of this slice so the first change is limited to
+  # authentication hardening plus disabling local accounts.
+  local_account_disabled          = true
+  entra_integration_enabled       = true
+  entra_tenant_id                 = data.azurerm_client_config.current.tenant_id
+  entra_admin_group_object_ids    = var.entra_admin_group_object_ids
+  entra_azure_rbac_enabled        = false
   private_cluster_enabled         = false
   automatic_upgrade_channel       = "patch"
   network_plugin                  = "azure"

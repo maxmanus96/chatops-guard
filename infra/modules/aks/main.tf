@@ -28,6 +28,16 @@ resource "azurerm_kubernetes_cluster" "this" {
     }
   }
 
+  dynamic "azure_active_directory_role_based_access_control" {
+    for_each = var.entra_integration_enabled ? [1] : []
+
+    content {
+      tenant_id              = var.entra_tenant_id
+      admin_group_object_ids = tolist(var.entra_admin_group_object_ids)
+      azure_rbac_enabled     = var.entra_azure_rbac_enabled
+    }
+  }
+
   # Keep one mixed system pool for now. Restricting this pool to only critical addons
   # would require a separate user pool first, which is a later slice for this module.
   default_node_pool {
