@@ -39,7 +39,7 @@ This file is a grouped planning view of the current backlog after the recent boo
   - [x] Set `api_server_authorized_ip_ranges` locally before the first apply; `enable_aks = true` now requires it
   - [x] Keep `local_account_disabled = false` for the first demo cluster until managed AAD integration exists
   - [x] Prove the first local `enable_aks = true` apply from `infra/envs/dev-platform`
-  - [ ] Add `dev-platform` to GitHub validation in a follow-up CI PR after the local AKS rollout is proven
+  - [x] Add `dev-platform` GitHub validation/plan-apply follow-up issue `#53`
   - [ ] #52 INF-07 · AKS managed Entra ID integration and disable local accounts
   - [ ] Keep AKS design decisions explicit: egress, admin access path, private-cluster timing
   - [ ] #16 INF-03 · Event Grid + Topic
@@ -64,6 +64,7 @@ This file is a grouped planning view of the current backlog after the recent boo
 - Tasks:
   - [ ] #2 Add Ci&CD to the repo
   - [ ] Close issue #43 now that the repaired `tf-drift` workflow is stable again
+  - [ ] #53 CI-04 · Add dev-platform to Terraform GitHub validation and plan/apply
   - [ ] #28 SEC-01 · Trivy image + IaC scan gate
   - [ ] #30 SEC-03 · SBOM generation & upload
   - [ ] #31 CI-01 · Build & push images to ACR

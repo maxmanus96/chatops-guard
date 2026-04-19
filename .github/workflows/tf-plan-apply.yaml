@@ -27,7 +27,7 @@ env:
   ARM_CLIENT_ID: "${{ secrets.AZURE_CLIENT_ID }}"
   ARM_SUBSCRIPTION_ID: "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
   ARM_TENANT_ID: "${{ secrets.AZURE_TENANT_ID }}"
-  TF_TARGET_ENVS: ${{ vars.TF_TARGET_ENVS || '["dev"]' }}
+  TF_TARGET_ENVS: ${{ vars.TF_TARGET_ENVS || '["dev","dev-platform"]' }}
 
 jobs:
   terraform-plan:
@@ -37,7 +37,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        environment: ${{ fromJson(vars.TF_TARGET_ENVS || '["dev"]') }}
+        environment: ${{ fromJson(vars.TF_TARGET_ENVS || '["dev","dev-platform"]') }}
     env:
       ARM_SKIP_PROVIDER_REGISTRATION: true
       TF_ENV_DIR: infra/envs/${{ matrix.environment }}
@@ -161,7 +161,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        environment: ${{ fromJson(vars.TF_TARGET_ENVS || '["dev"]') }}
+        environment: ${{ fromJson(vars.TF_TARGET_ENVS || '["dev","dev-platform"]') }}
     timeout-minutes: 30
     env:
       TF_ENV_DIR: infra/envs/${{ matrix.environment }}
