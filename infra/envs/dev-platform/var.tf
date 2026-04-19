@@ -148,6 +148,22 @@ variable "api_server_authorized_ip_ranges" {
   }
 }
 
+variable "entra_admin_group_object_ids" {
+  description = "Dedicated Entra admin group object IDs for AKS access. Use groups, not personal user object IDs, so cluster admin access stays transferable."
+  type        = set(string)
+  default     = ["06add8f0-84d0-452c-961d-4c8ad96c7391"]
+
+  validation {
+    condition     = alltrue([for object_id in var.entra_admin_group_object_ids : trimspace(object_id) != ""])
+    error_message = "entra_admin_group_object_ids must not contain empty values."
+  }
+
+  validation {
+    condition     = !var.enable_aks || length(var.entra_admin_group_object_ids) > 0
+    error_message = "entra_admin_group_object_ids must contain at least one dedicated Entra admin group object ID when enable_aks is true."
+  }
+}
+
 variable "tags" {
   description = "Extra tags to merge into the environment defaults."
   type        = map(string)

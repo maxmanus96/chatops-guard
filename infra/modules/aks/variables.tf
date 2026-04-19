@@ -97,6 +97,50 @@ variable "local_account_disabled" {
   description = "Whether local AKS admin accounts should be disabled. On Kubernetes 1.25+ this requires managed AAD integration, so the demo default stays false until that slice exists."
   type        = bool
   default     = false
+
+  validation {
+    condition     = !var.local_account_disabled || var.entra_integration_enabled
+    error_message = "local_account_disabled can only be true when entra_integration_enabled is also true."
+  }
+}
+
+variable "entra_integration_enabled" {
+  description = "Whether managed Entra ID integration should be enabled for the AKS control plane."
+  type        = bool
+  default     = false
+
+  validation {
+    condition     = !var.entra_integration_enabled || (var.entra_tenant_id != null && trimspace(var.entra_tenant_id) != "" && length(var.entra_admin_group_object_ids) > 0)
+    error_message = "entra_integration_enabled requires entra_tenant_id and at least one value in entra_admin_group_object_ids."
+  }
+}
+
+variable "entra_tenant_id" {
+  description = "Tenant ID for the managed Entra ID integration. Required when entra_integration_enabled is true."
+  type        = string
+  default     = null
+
+  validation {
+    condition     = var.entra_tenant_id == null || trimspace(var.entra_tenant_id) != ""
+    error_message = "entra_tenant_id must be null or a non-empty tenant ID string."
+  }
+}
+
+variable "entra_admin_group_object_ids" {
+  description = "Entra group object IDs that should receive AKS admin access when managed Entra ID integration is enabled."
+  type        = set(string)
+  default     = []
+
+  validation {
+    condition     = alltrue([for object_id in var.entra_admin_group_object_ids : trimspace(object_id) != ""])
+    error_message = "entra_admin_group_object_ids must not contain empty values."
+  }
+}
+
+variable "entra_azure_rbac_enabled" {
+  description = "Whether Azure RBAC should authorize Kubernetes access once managed Entra ID integration is enabled. Keep false for the first slice so authentication and local-account hardening land before the broader Azure RBAC rollout."
+  type        = bool
+  default     = false
 }
 
 variable "private_cluster_enabled" {

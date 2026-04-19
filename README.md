@@ -120,7 +120,9 @@ Configuration details and examples will be documented as features are implemente
 - GitHub Terraform workflows now target both `dev` and `dev-platform` by default, so future AKS Terraform changes can be planned/applied from Actions as well.
 - The current cost-aware demo default for AKS nodes is `Standard_D2as_v5`, not `Standard_D2_v2`. That is the current best-ROI middle ground: materially cheaper than Dv2, more modern, and less memory-constrained than the ultra-cheap `A2_v2` candidate.
 - B-series was not chosen for the demo default because Microsoft documents B-series VMs as unsupported for AKS system node pools.
-- The first demo AKS cluster keeps local accounts enabled for now because disabling them on Kubernetes 1.25+ requires managed AAD integration. That hardening step is now tracked in issue `#52` until the Entra ID/RBAC slice is introduced.
+- The first demo AKS cluster originally kept local accounts enabled because disabling them on Kubernetes 1.25+ requires managed Entra ID integration. Issue `#52` now wires that managed Entra path into Terraform so the next AKS-enabled apply can flip `local_account_disabled` on deliberately instead of by demo shortcut.
+- For issue `#52`, the chosen access model is a dedicated Entra admin group, not an individual user object ID. That keeps AKS admin access transferable, reviewable, and easier to explain than binding cluster admin access to one person.
+- Issue `#52` keeps `azure_rbac_enabled = false` in the first managed Entra slice. That is intentional: the smallest useful change is authentication hardening plus disabling local accounts; Azure RBAC role design is a separate authorization rollout.
 - Production definitions exist but remain dormant until explicitly enabled via GitHub Actions `TF_TARGET_ENVS`.
 - GitHub Actions workflow `.github/workflows/tf-plan-apply.yaml` uses a matrix to run `plan/apply` per environment while scoping Terraform commands to `infra/envs/<env>` so prod is untouched unless opted in.
 - Security posture for the dev state storage account balances CI access with cost:
