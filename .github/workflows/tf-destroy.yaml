@@ -9,6 +9,7 @@ on:
         type: choice
         options:
           - dev
+          - dev-platform
           - prod
         default: dev
       confirm_destroy:

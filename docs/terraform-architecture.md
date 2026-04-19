@@ -87,7 +87,7 @@ Why the name is explicit right now:
 The network side is now handled by `infra/modules/network`, and the monitoring side is resolved through an explicit Log Analytics workspace lookup from the existing bootstrap resources.
 
 That local rollout proof is now done. The next real decisions are:
-- add `infra/envs/dev-platform` to GitHub validation as a focused follow-up CI slice
+- land the focused follow-up CI slice in issue `#53` so `infra/envs/dev-platform` participates in GitHub Terraform validation and plan/apply
 - handle managed Entra ID integration in issue `#52`
 
 That keeps the already-applied `dev` state stable while moving AKS work from module-only scaffolding toward real environment composition.

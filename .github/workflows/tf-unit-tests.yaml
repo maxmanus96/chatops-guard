@@ -39,10 +39,11 @@ jobs:
       with:
         terraform_wrapper: false
 
-    # Initialize and validate both the live dev root and the AKS module skeleton.
+    # Initialize and validate the live bootstrap root, the dev platform root,
+    # and the reusable AKS module when it exists.
     - name: Terraform Init
       run: |
-        dirs="infra/envs/dev"
+        dirs="infra/envs/dev infra/envs/dev-platform"
         if [ -d infra/modules/aks ]; then
           dirs="$dirs infra/modules/aks"
         fi
@@ -52,7 +53,7 @@ jobs:
 
     - name: Terraform Validate
       run: |
-        dirs="infra/envs/dev"
+        dirs="infra/envs/dev infra/envs/dev-platform"
         if [ -d infra/modules/aks ]; then
           dirs="$dirs infra/modules/aks"
         fi
@@ -62,7 +63,7 @@ jobs:
 
     - name: Terraform Format
       run: |
-        dirs="infra/envs/dev"
+        dirs="infra/envs/dev infra/envs/dev-platform"
         if [ -d infra/modules/aks ]; then
           dirs="$dirs infra/modules/aks"
         fi
