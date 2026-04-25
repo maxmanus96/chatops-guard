@@ -73,6 +73,8 @@ This file is a grouped planning view of the current backlog after the recent boo
   - [x] #53 CI-04 · Add dev-platform to Terraform GitHub validation and plan/apply
   - [x] #55 Extend tf-drift to cover dev-platform with environment-aware drift issues
   - [x] #60 CI-05 · Static automated PR quality review gate
+  - [ ] #62 SEC-04 · Harden Terraform workflow guardrails and Azure OIDC least privilege
+  - [ ] Finish the next #62 slice: Azure OIDC least-privilege identity split and Checkov coverage expansion
   - [ ] #28 SEC-01 · Trivy image + IaC scan gate
   - [ ] #30 SEC-03 · SBOM generation & upload
   - [ ] #31 CI-01 · Build & push images to ACR

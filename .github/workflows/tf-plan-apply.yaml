@@ -40,10 +40,21 @@ jobs:
         environment: ${{ fromJson(vars.TF_TARGET_ENVS || '["dev","dev-platform"]') }}
     env:
       ARM_SKIP_PROVIDER_REGISTRATION: true
+      TF_ENV: ${{ matrix.environment }}
       TF_ENV_DIR: infra/envs/${{ matrix.environment }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Validate target environment
+        run: |
+          case "${TF_ENV}" in
+            dev|dev-platform) ;;
+            *)
+              echo "::error::Unsupported Terraform environment '${TF_ENV}'. Update the workflow allowlist before targeting a new root."
+              exit 1
+              ;;
+          esac
 
       - name: Azure OIDC Login
         uses: azure/login@v2
@@ -164,11 +175,22 @@ jobs:
         environment: ${{ fromJson(vars.TF_TARGET_ENVS || '["dev","dev-platform"]') }}
     timeout-minutes: 30
     env:
+      TF_ENV: ${{ matrix.environment }}
       TF_ENV_DIR: infra/envs/${{ matrix.environment }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Validate target environment
+        run: |
+          case "${TF_ENV}" in
+            dev|dev-platform) ;;
+            *)
+              echo "::error::Unsupported Terraform environment '${TF_ENV}'. Update the workflow allowlist before targeting a new root."
+              exit 1
+              ;;
+          esac
 
       - name: Azure OIDC Login
         uses: azure/login@v2

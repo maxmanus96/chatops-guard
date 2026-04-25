@@ -8,13 +8,16 @@ on:
         required: true
         type: choice
         options:
-          - dev
           - dev-platform
-          - prod
-        default: dev
+          - dev
+        default: dev-platform
       confirm_destroy:
         description: 'Type destroy-<environment> to confirm'
         required: true
+        type: string
+      confirm_bootstrap_destroy:
+        description: 'Only for dev bootstrap: type destroy-bootstrap-state-dev'
+        required: false
         type: string
       reason:
         description: 'Why are you destroying this environment?'
@@ -41,9 +44,13 @@ jobs:
     name: 'Terraform Destroy (${{ inputs.environment }})'
     runs-on: ubuntu-latest
     timeout-minutes: 45
-    environment: ${{ inputs.environment == 'prod' && 'production' || 'development' }}
+    environment: development
     env:
+      TF_ENV: ${{ inputs.environment }}
       TF_ENV_DIR: infra/envs/${{ inputs.environment }}
+      CONFIRM_DESTROY: ${{ inputs.confirm_destroy }}
+      CONFIRM_BOOTSTRAP_DESTROY: ${{ inputs.confirm_bootstrap_destroy }}
+      DESTROY_REASON: ${{ inputs.reason || 'not provided' }}
 
     steps:
     - name: Ref Safety Check
@@ -53,10 +60,26 @@ jobs:
           exit 1
         fi
 
+    - name: Environment Guard
+      run: |
+        case "${TF_ENV}" in
+          dev-platform) ;;
+          dev)
+            if [ "${CONFIRM_BOOTSTRAP_DESTROY}" != 'destroy-bootstrap-state-dev' ]; then
+              echo "::error::Destroying dev targets the bootstrap/state root. Type destroy-bootstrap-state-dev in confirm_bootstrap_destroy to continue."
+              exit 1
+            fi
+            ;;
+          *)
+            echo "::error::Unsupported destroy environment '${TF_ENV}'. Update the workflow allowlist before targeting a new root."
+            exit 1
+            ;;
+        esac
+
     - name: Confirmation Guard
       run: |
-        EXPECTED="destroy-${{ inputs.environment }}"
-        if [ "${{ inputs.confirm_destroy }}" != "$EXPECTED" ]; then
+        EXPECTED="destroy-${TF_ENV}"
+        if [ "${CONFIRM_DESTROY}" != "$EXPECTED" ]; then
           echo "Confirmation failed. Expected: $EXPECTED"
           exit 1
         fi
@@ -80,13 +103,49 @@ jobs:
       run: terraform -chdir=${{ env.TF_ENV_DIR }} init -input=false
 
     - name: Terraform Destroy Plan
-      run: terraform -chdir=${{ env.TF_ENV_DIR }} plan -destroy -lock-timeout=5m -no-color -input=false -out=tfdestroyplan
+      run: terraform -chdir="${TF_ENV_DIR}" plan -destroy -lock-timeout=5m -no-color -input=false -out=tfdestroyplan
+
+    - name: Create Destroy Summary
+      id: destroy-summary
+      run: |
+        terraform -chdir="${TF_ENV_DIR}" show -json tfdestroyplan > "${TF_ENV_DIR}/tfdestroyplan.json"
+
+        SUMMARY="$(python3 - "${TF_ENV_DIR}/tfdestroyplan.json" <<'PY'
+        import json
+        import sys
+
+        with open(sys.argv[1], encoding="utf-8") as plan_file:
+            plan = json.load(plan_file)
+
+        counts = {"create": 0, "update": 0, "delete": 0, "replace": 0}
+        for resource in plan.get("resource_changes") or []:
+            actions = (resource.get("change") or {}).get("actions") or []
+            action_set = set(actions)
+            if {"create", "delete"}.issubset(action_set):
+                counts["replace"] += 1
+                continue
+            for action in ("create", "update", "delete"):
+                if action in action_set:
+                    counts[action] += 1
+
+        print(
+            f"create={counts['create']} "
+            f"update={counts['update']} "
+            f"delete={counts['delete']} "
+            f"replace={counts['replace']}"
+        )
+        PY
+        )"
+
+        echo "summary=${SUMMARY}" >> "${GITHUB_OUTPUT}"
 
     - name: Publish Destroy Summary
       run: |
-        echo "## Terraform Destroy Request (${{ inputs.environment }})" >> $GITHUB_STEP_SUMMARY
-        echo "Reason: ${{ inputs.reason || 'not provided' }}" >> $GITHUB_STEP_SUMMARY
-        terraform -chdir=${{ env.TF_ENV_DIR }} show -no-color tfdestroyplan >> $GITHUB_STEP_SUMMARY
+        echo "## Terraform Destroy Request (${TF_ENV})" >> "${GITHUB_STEP_SUMMARY}"
+        echo "Reason: ${DESTROY_REASON}" >> "${GITHUB_STEP_SUMMARY}"
+        echo "Summary: ${{ steps.destroy-summary.outputs.summary }}" >> "${GITHUB_STEP_SUMMARY}"
+        echo "" >> "${GITHUB_STEP_SUMMARY}"
+        echo "Full destroy plan output is intentionally not published to the job summary." >> "${GITHUB_STEP_SUMMARY}"
 
     - name: Terraform Destroy Apply
-      run: terraform -chdir=${{ env.TF_ENV_DIR }} apply -lock-timeout=5m -auto-approve tfdestroyplan
+      run: terraform -chdir="${TF_ENV_DIR}" apply -lock-timeout=5m -auto-approve tfdestroyplan

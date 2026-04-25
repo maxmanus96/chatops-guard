@@ -46,6 +46,16 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
 
+    - name: Validate target environment
+      run: |
+        case "${TF_ENV}" in
+          dev|dev-platform) ;;
+          *)
+            echo "::error::Unsupported Terraform drift environment '${TF_ENV}'. Update the workflow allowlist before targeting a new root."
+            exit 1
+            ;;
+        esac
+
     - name: Azure OIDC Login
       uses: azure/login@v2
       with:
@@ -87,21 +97,47 @@ jobs:
         name: tfplan-drift-${{ matrix.environment }}
         path: ${{ env.TF_ENV_DIR }}/tfplan
         
-    # Create string output of Terraform Plan
-    - name: Create String Output
+    # Create a redacted drift summary for issues and workflow summaries.
+    # Keep the full binary plan in the workflow artifact instead of publishing
+    # resource-level details into GitHub issues.
+    - name: Create Redacted Drift Summary
       id: tf-plan-string
       run: |
-        TERRAFORM_PLAN=$(terraform -chdir=${{ env.TF_ENV_DIR }} show -no-color tfplan)
+        terraform -chdir="${TF_ENV_DIR}" show -json tfplan > "${TF_ENV_DIR}/tfplan.json"
+
+        SUMMARY="$(python3 - "${TF_ENV_DIR}/tfplan.json" <<'PY'
+        import json
+        import sys
+
+        with open(sys.argv[1], encoding="utf-8") as plan_file:
+            plan = json.load(plan_file)
+
+        counts = {"create": 0, "update": 0, "delete": 0, "replace": 0}
+        for resource in plan.get("resource_changes") or []:
+            actions = (resource.get("change") or {}).get("actions") or []
+            action_set = set(actions)
+            if {"create", "delete"}.issubset(action_set):
+                counts["replace"] += 1
+                continue
+            for action in ("create", "update", "delete"):
+                if action in action_set:
+                    counts[action] += 1
+
+        print(
+            f"create={counts['create']} "
+            f"update={counts['update']} "
+            f"delete={counts['delete']} "
+            f"replace={counts['replace']}"
+        )
+        PY
+        )"
         
         delimiter="$(openssl rand -hex 8)"
         echo "summary<<${delimiter}" >> $GITHUB_OUTPUT
-        echo "## Terraform Plan Output (${TF_ENV})" >> $GITHUB_OUTPUT
-        echo "<details><summary>Click to expand</summary>" >> $GITHUB_OUTPUT
+        echo "## Terraform Drift Summary (${TF_ENV})" >> $GITHUB_OUTPUT
+        echo "${SUMMARY}" >> $GITHUB_OUTPUT
         echo "" >> $GITHUB_OUTPUT
-        echo '```terraform' >> $GITHUB_OUTPUT
-        echo "$TERRAFORM_PLAN" >> $GITHUB_OUTPUT
-        echo '```' >> $GITHUB_OUTPUT
-        echo "</details>" >> $GITHUB_OUTPUT
+        echo "Full Terraform plan output is intentionally not published to drift issues. Download the workflow artifact for deeper triage." >> $GITHUB_OUTPUT
         echo "${delimiter}" >> $GITHUB_OUTPUT
         
     # Publish Terraform Plan as task summary
