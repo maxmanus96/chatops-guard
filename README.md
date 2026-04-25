@@ -115,9 +115,11 @@ Configuration details and examples will be documented as features are implemente
   - the state storage account and `tfstate` container
   - the Log Analytics workspace used for storage diagnostics
   - the blob-service diagnostic setting that sends storage logs/metrics to Log Analytics
-- `infra/modules/aks` now exists as the first reusable platform module, and `infra/envs/dev-platform` is the first thin non-bootstrap root that composes it. That root now has its own backend/state, has safely applied `rg-chatops-guard-platform-dev` plus a minimal VNet/subnet foundation, and can produce a real `enable_aks = true` plan while AKS still stays explicitly gated by default. When AKS is enabled there, `api_server_authorized_ip_ranges` must also be set so the first demo cluster does not leave its public API open unintentionally.
+- `infra/modules/aks` now exists as the first reusable platform module, and `infra/envs/dev-platform` is the first thin non-bootstrap root that composes it. That root now has its own backend/state, has safely applied `rg-chatops-guard-platform-dev` plus a minimal VNet/subnet foundation, and can produce a real `enable_aks = true` plan while AKS still stays explicitly gated by default. The AKS node subnet is associated with a minimal NSG owned by `infra/modules/network`; no broad inbound rules are added. When AKS is enabled there, `api_server_authorized_ip_ranges` must also be set so the first demo cluster does not leave its public API open unintentionally.
 - The first AKS rollout path was intentionally local-first to prove the cluster create with an untracked `infra/envs/dev-platform/terraform.tfvars` and a local `/32` admin IP.
-- GitHub Terraform workflows now target both `dev` and `dev-platform` by default, so future AKS Terraform changes can be planned/applied from Actions as well. Drift detection also checks both roots and keeps drift issues environment-specific.
+- GitHub Terraform workflows now target both `dev` and `dev-platform` by default, so future AKS Terraform changes can be planned/applied from Actions as well. Drift detection also checks both roots, keeps drift issues environment-specific, and publishes count summaries instead of full Terraform plans in issues.
+- Terraform workflow guardrails now reject unsupported matrix environments before Azure login. Manual destroy defaults to `dev-platform`; destroying the `dev` bootstrap/state root requires an extra bootstrap confirmation phrase.
+- Terraform workflows are ready for split Azure OIDC identities: `AZURE_PLAN_CLIENT_ID` for plan/drift, `AZURE_APPLY_CLIENT_ID` for apply/destroy, and `AZURE_CLIENT_ID` only as a legacy fallback during migration.
 - PR review guardrails now include a static, no-Azure-login quality workflow for GitHub Actions syntax (`actionlint`) and Terraform `fmt/init/validate`, plus Dependabot PRs for GitHub Actions and Terraform provider updates.
 - The current cost-aware demo default for AKS nodes is `Standard_D2as_v5`, not `Standard_D2_v2`. That is the current best-ROI middle ground: materially cheaper than Dv2, more modern, and less memory-constrained than the ultra-cheap `A2_v2` candidate.
 - B-series was not chosen for the demo default because Microsoft documents B-series VMs as unsupported for AKS system node pools.
@@ -137,6 +139,7 @@ Configuration details and examples will be documented as features are implemente
 - Budget-conscious items still pending for dev (tracked in [plan.md](plan.md)):
   - Geo-redundant replication (CKV_AZURE_206) intentionally left as LRS to minimize cost.
   - Customer-managed keys (CKV2_AZURE_1), SAS expiration policy (CKV2_AZURE_41), and private endpoints (CKV2_AZURE_33) are deferred until prod hardening.
+- Azure OIDC least-privilege migration details are documented in [docs/azure-oidc-least-privilege.md](docs/azure-oidc-least-privilege.md).
 
 ## Contributing
 

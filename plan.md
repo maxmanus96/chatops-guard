@@ -12,6 +12,7 @@
 - `infra/modules/aks` exists as the first reusable platform module.
 - `infra/modules/network` now exists as a sibling module for the minimal VNet/subnet foundation.
 - `infra/envs/dev-platform` is the first thin non-bootstrap platform root that composes both modules. It now has its own backend/state, has safely applied `rg-chatops-guard-platform-dev` plus the first VNet/subnet foundation, and has already completed the first local `enable_aks = true` AKS apply with a clean post-apply plan.
+- The AKS node subnet now has a module-owned NSG association. The NSG intentionally starts without custom allow rules, relying on Azure default deny-inbound behavior while avoiding a risky broad inbound exception.
 - `infra/envs/dev-platform` now also requires `api_server_authorized_ip_ranges` when `enable_aks = true`, so the first public dev AKS apply does not expose the API server broadly by accident.
 - The first AKS rollout path was local-first: use an untracked `infra/envs/dev-platform/terraform.tfvars` for `enable_aks = true` plus a local `/32` admin IP. That proof is now done, and `dev-platform` participates in GitHub `tf-plan-apply`.
 - The current cost-aware AKS demo default is `Standard_D2as_v5`, not `Standard_D2_v2`. That is the best-ROI middle ground so far: materially cheaper than Dv2, more modern, and less memory-constrained than the ultra-cheap `A2_v2` candidate.
@@ -20,17 +21,19 @@
 - Issue `#52` keeps `azure_rbac_enabled = false` in the first managed Entra slice. That is intentional: the smallest useful change is authentication hardening plus disabling local accounts; Azure RBAC role design is a separate authorization rollout.
 
 ## CI/CD Flow
-1. `tf-plan-apply` workflow (GitHub Actions) runs in matrix mode over `TF_TARGET_ENVS` (defaults to `["dev","dev-platform"]`).
+1. `tf-plan-apply` workflow (GitHub Actions) runs in matrix mode over `TF_TARGET_ENVS` (defaults to `["dev","dev-platform"]`) and rejects unsupported environment names before Azure login.
 2. Each matrix job:
    - Logs into Azure with OIDC.
+   - Uses `AZURE_PLAN_CLIENT_ID` for plan jobs and `AZURE_APPLY_CLIENT_ID` for apply jobs, falling back to legacy `AZURE_CLIENT_ID` until split identities are configured.
    - Runs Terraform init/fmt/validate/plan under `infra/envs/<env>` using `-chdir`.
    - Executes TFLint/tfsec scoped to the same directory.
    - Uploads the per-environment plan artifact and computed exit code.
 3. Apply jobs download the matching artifact, inspect the exit code, and only run `terraform apply` when changes exist and the branch is `main`.
-4. `tf-drift` now runs in matrix mode for `dev` and `dev-platform`, uses Azure OIDC login, and creates or closes environment-specific drift issues.
+4. `tf-drift` now runs in matrix mode for `dev` and `dev-platform`, uses Azure OIDC login, creates or closes environment-specific drift issues, and publishes redacted count summaries instead of full plan text in issues.
 5. `pr-quality.yaml` provides static automated PR review without Azure login: workflow linting via `actionlint` plus Terraform `fmt/init/validate` over the active roots/modules.
 6. Dependabot is enabled for GitHub Actions and Terraform provider updates so dependency bumps arrive as reviewable PRs instead of silent drift.
-7. `tf-unit-tests.yaml` now validates the live `dev` root, `dev-platform`, and tolerates optional module paths, while `tf-destroy.yaml` provides a guarded manual destroy path for cost-control or teardown scenarios, including `dev-platform`.
+7. `tf-unit-tests.yaml` now validates the live `dev` root, `dev-platform`, and local modules, and Checkov SARIF now covers both active roots.
+8. `tf-destroy.yaml` provides a guarded manual destroy path for cost-control or teardown scenarios. Destroy defaults to `dev-platform`; destroying `dev` requires an extra bootstrap/state confirmation phrase.
 
 ## Security Hardening Status (Dev)
 | Control | Status | Notes |
@@ -41,6 +44,7 @@
 | Diagnostics to Log Analytics | ✅ | Dev LA workspace with 30-day retention; diagnostics now target the blob service scope Azure actually supports. |
 | Blob versioning | ✅ | Kept enabled on the dev state account to improve tfstate recovery; extra blob storage cost should stay modest for this small dev backend. |
 | Checkov skips (dev) | ⚠️ | CKV2_AZURE_1, CKV_AZURE_206, CKV_AZURE_59, CKV2_AZURE_33, CKV_AZURE_33, CKV2_AZURE_21 (documented inline). |
+| AKS subnet NSG | ✅ | `infra/modules/network` associates the AKS node subnet with a minimal NSG; no broad inbound rules are added. |
 | SAS expiration policy | ⏳ | Terraform support limited; revisit when prod environment is built. |
 | Customer-managed keys | ⏳ | Requires Key Vault + key rotation; deferred for cost reasons. |
 | Private endpoints | ⏳ | Adds VNets/DNS and billing overhead; hold until prod readiness. |
@@ -50,10 +54,11 @@
 1. Refresh local Azure auth with `az login` before making any live cost claim about AKS or VMSS resources.
 2. Keep AKS disabled in `infra/envs/dev`; the bootstrap root should not silently grow into the long-term platform root.
 3. Keep AKS disabled by default for cost control unless there is an active demo/learning session and a clear teardown plan.
-4. Merge PR `#59` for issue `#55`, then watch the first scheduled/manual drift run to confirm separate drift issues per environment.
-5. Merge the issue `#60` static PR quality gate so workflow/Terraform syntax mistakes are caught before human review.
-6. Close stale issue hygiene for delivered workflow/bootstrap work if GitHub has not already caught up, especially issue `#43`.
-7. Then revisit additional dev hardening upgrades such as SAS policy, CMK, private endpoints, or GRS.
+4. Watch the first scheduled/manual drift run from merged PR `#59` to confirm separate drift issues per environment.
+5. Merge the issue `#62` workflow/security PR, then configure split Azure identities in GitHub secrets when ready.
+6. After split identities are proven, remove the legacy `AZURE_CLIENT_ID` fallback from Terraform workflows.
+7. Close stale issue hygiene for delivered workflow/bootstrap work if GitHub has not already caught up, especially issue `#43`.
+8. Then revisit additional dev hardening upgrades such as SAS policy, CMK, private endpoints, or GRS.
 
 ## ROI Priority Order (2026-04-25)
 
@@ -67,7 +72,7 @@
 1. Finish the staged dev-platform rollout path and keep the new GitHub Terraform coverage stable:
    - `#12`, `#50`, `#53`, `#55`
 2. Improve supply-chain and project automation with mostly engineering time, not cloud spend:
-   - `#28`, `#30`, `#38`, `#39`, `#60`
+   - `#28`, `#30`, `#38`, `#39`, `#60`, `#62`
 3. Close stale issue hygiene for recently delivered work:
    - `#1`, `#15`, `#43`
 

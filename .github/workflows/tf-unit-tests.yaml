@@ -40,13 +40,15 @@ jobs:
         terraform_wrapper: false
 
     # Initialize and validate the live bootstrap root, the dev platform root,
-    # and the reusable AKS module when it exists.
+    # and reusable local modules when they exist.
     - name: Terraform Init
       run: |
         dirs="infra/envs/dev infra/envs/dev-platform"
-        if [ -d infra/modules/aks ]; then
-          dirs="$dirs infra/modules/aks"
-        fi
+        for module_dir in infra/modules/aks infra/modules/network; do
+          if [ -d "$module_dir" ]; then
+            dirs="$dirs $module_dir"
+          fi
+        done
         for dir in $dirs; do
           terraform -chdir="$dir" init -backend=false
         done
@@ -54,9 +56,11 @@ jobs:
     - name: Terraform Validate
       run: |
         dirs="infra/envs/dev infra/envs/dev-platform"
-        if [ -d infra/modules/aks ]; then
-          dirs="$dirs infra/modules/aks"
-        fi
+        for module_dir in infra/modules/aks infra/modules/network; do
+          if [ -d "$module_dir" ]; then
+            dirs="$dirs $module_dir"
+          fi
+        done
         for dir in $dirs; do
           terraform -chdir="$dir" validate
         done
@@ -64,20 +68,38 @@ jobs:
     - name: Terraform Format
       run: |
         dirs="infra/envs/dev infra/envs/dev-platform"
-        if [ -d infra/modules/aks ]; then
-          dirs="$dirs infra/modules/aks"
-        fi
+        for module_dir in infra/modules/aks infra/modules/network; do
+          if [ -d "$module_dir" ]; then
+            dirs="$dirs $module_dir"
+          fi
+        done
         for dir in $dirs; do
           terraform -chdir="$dir" fmt -check -recursive
         done
 
-    # Keep the blocking SARIF scan on the active dev root for now.
-    # The AKS module is still a skeleton and its heavier hardening is being handled in issue #1.
+  checkov-iac:
+    name: 'Checkov IaC (${{ matrix.target.name }})'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - name: dev
+            directory: infra/envs/dev
+          - name: dev-platform
+            directory: infra/envs/dev-platform
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    # Keep Checkov scoped to active roots. The dev-platform root exercises the
+    # local network and AKS modules through real environment composition.
     - name: Run Checkov action
       id: checkov
       uses: bridgecrewio/checkov-action@v12
       with:
-        directory: infra/envs/dev
+        directory: ${{ matrix.target.directory }}
         framework: terraform
         output_format: cli,sarif
         output_file_path: console,results.sarif
@@ -87,4 +109,4 @@ jobs:
       uses: github/codeql-action/upload-sarif@v3
       with:
         sarif_file: results.sarif
-        category: checkov
+        category: checkov-${{ matrix.target.name }}

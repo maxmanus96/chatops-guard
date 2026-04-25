@@ -31,6 +31,7 @@ This file is a grouped planning view of the current backlog after the recent boo
   - [x] Add `enable_aks = false` so the first safe apply can create only the platform resource group
   - [x] Apply `infra/envs/dev-platform` once to create `rg-chatops-guard-platform-dev` without creating AKS
   - [x] Add `infra/modules/network` and apply the minimal dev VNet/subnet foundation
+  - [x] Associate the AKS node subnet with a minimal NSG so the subnet has an explicit network security boundary
   - [x] Replace the raw subnet input with `module.network.aks_node_subnet_id`
   - [x] Replace the raw Log Analytics workspace ID input with a workspace lookup by name and resource group
   - [x] Add `terraform.tfvars.example` so the safe-first-apply path and first AKS-enable path are both visible
@@ -73,6 +74,8 @@ This file is a grouped planning view of the current backlog after the recent boo
   - [x] #53 CI-04 · Add dev-platform to Terraform GitHub validation and plan/apply
   - [x] #55 Extend tf-drift to cover dev-platform with environment-aware drift issues
   - [x] #60 CI-05 · Static automated PR quality review gate
+  - [x] #62 SEC-04 · Harden Terraform workflow guardrails and Azure OIDC least privilege
+  - [ ] After split Azure identities are proven, remove the legacy `AZURE_CLIENT_ID` fallback from Terraform workflows
   - [ ] #28 SEC-01 · Trivy image + IaC scan gate
   - [ ] #30 SEC-03 · SBOM generation & upload
   - [ ] #31 CI-01 · Build & push images to ACR

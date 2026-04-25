@@ -14,7 +14,7 @@ The repository already has a live `dev` Terraform layout under `infra/envs/dev` 
 - `infra/envs/dev` currently manages remote-state bootstrap resources and now successfully plans/applies again after the bootstrap resources were imported into state and the storage diagnostics scope was corrected.
 - `infra/envs/prod` exists as a placeholder.
 - `infra/modules/aks` now exists as the first reusable module, delivered by issue `#1` and PR `#40`.
-- `infra/modules/network` now exists as a sibling module for the minimal dev VNet/subnet foundation.
+- `infra/modules/network` now exists as a sibling module for the minimal dev VNet/subnet foundation. It owns the AKS node subnet and its NSG association so subnet security stays with the subnet instead of being hidden inside the AKS module.
 - `infra/envs/dev-platform` now exists as the first thin non-bootstrap environment root that composes both modules without changing the live bootstrap root.
 - That root now has its own backend/state, has been safely applied for the platform resource group and network foundation, and can produce a real `enable_aks = true` cluster plan while `enable_aks = false` still keeps cluster creation off by default.
 - When `enable_aks = true`, the root now also requires explicit `api_server_authorized_ip_ranges` so the first public dev cluster does not accidentally expose its API to the world.

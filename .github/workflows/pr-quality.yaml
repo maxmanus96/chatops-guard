@@ -48,6 +48,8 @@ jobs:
           echo "${install_dir}" >> "${GITHUB_PATH}"
 
       - name: Run actionlint
+        # ShellCheck is intentionally deferred while older workflow scripts are
+        # cleaned up. Keep this gate focused on GitHub Actions syntax for now.
         run: actionlint -shellcheck= -color
 
   terraform-static-review:

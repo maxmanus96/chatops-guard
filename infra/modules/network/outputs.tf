@@ -17,3 +17,8 @@ output "aks_node_subnet_name" {
   description = "Name of the AKS node subnet."
   value       = azurerm_subnet.aks_nodes.name
 }
+
+output "aks_node_subnet_nsg_id" {
+  description = "Resource ID of the Network Security Group associated with the AKS node subnet."
+  value       = azurerm_network_security_group.aks_nodes.id
+}
