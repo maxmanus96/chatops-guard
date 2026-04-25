@@ -1,7 +1,7 @@
 # Terraform Architecture
 
-Status: proposed
-Date: 2026-03-22
+Status: staged implementation
+Date: 2026-04-25
 Related issue: #12
 
 ## Why this exists

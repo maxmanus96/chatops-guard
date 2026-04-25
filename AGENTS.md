@@ -14,7 +14,8 @@ Do not assume the README roadmap already exists in code.
 
 ## Current Repo Reality
 
-- `infra/envs/dev` is the only active Terraform environment today.
+- `infra/envs/dev` is the active bootstrap/state Terraform root.
+- `infra/envs/dev-platform` is the active non-bootstrap platform root for staged AKS/network work.
 - `infra/envs/prod` exists as a placeholder and should stay dormant unless explicitly enabled.
 - The main workflow is `.github/workflows/tf-plan-apply.yaml` and it scopes Terraform commands to `infra/envs/<env>`.
 - The dev state storage account is intentionally cost-aware rather than fully hardened:
@@ -45,8 +46,9 @@ Do not assume the README roadmap already exists in code.
 
 ## Validation Expectations
 
-- Terraform: run `fmt` and `validate` from the affected `infra/envs/<env>` directory.
+- Terraform: run `fmt` and `validate` from the affected `infra/envs/<env>` directory or module path.
 - Workflows: inspect triggers, permissions, OIDC auth, working directories, and branch/apply protections.
+- Security tooling: verify SARIF upload paths, PR-comment behavior, path scoping, and whether findings are blocking or advisory.
 - Docs: keep `README.md`, `plan.md`, and workflow expectations aligned.
 - Reviews: prioritize bugs, security regressions, workflow drift, and missing validation before style comments.
 

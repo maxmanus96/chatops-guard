@@ -28,7 +28,9 @@
    - Uploads the per-environment plan artifact and computed exit code.
 3. Apply jobs download the matching artifact, inspect the exit code, and only run `terraform apply` when changes exist and the branch is `main`.
 4. `tf-drift` now runs in matrix mode for `dev` and `dev-platform`, uses Azure OIDC login, and creates or closes environment-specific drift issues.
-5. `tf-unit-tests.yaml` now validates the live `dev` root, `dev-platform`, and tolerates optional module paths, while `tf-destroy.yaml` provides a guarded manual destroy path for cost-control or teardown scenarios, including `dev-platform`.
+5. `pr-quality.yaml` provides static automated PR review without Azure login: workflow linting via `actionlint` plus Terraform `fmt/init/validate` over the active roots/modules.
+6. Dependabot is enabled for GitHub Actions and Terraform provider updates so dependency bumps arrive as reviewable PRs instead of silent drift.
+7. `tf-unit-tests.yaml` now validates the live `dev` root, `dev-platform`, and tolerates optional module paths, while `tf-destroy.yaml` provides a guarded manual destroy path for cost-control or teardown scenarios, including `dev-platform`.
 
 ## Security Hardening Status (Dev)
 | Control | Status | Notes |
@@ -48,11 +50,12 @@
 1. Refresh local Azure auth with `az login` before making any live cost claim about AKS or VMSS resources.
 2. Keep AKS disabled in `infra/envs/dev`; the bootstrap root should not silently grow into the long-term platform root.
 3. Keep AKS disabled by default for cost control unless there is an active demo/learning session and a clear teardown plan.
-4. Merge the issue `#55` drift update, then watch the first scheduled/manual run to confirm separate drift issues per environment.
-5. Close stale issue hygiene for delivered workflow/bootstrap work if GitHub has not already caught up, especially issue `#43`.
-6. Then revisit additional dev hardening upgrades such as SAS policy, CMK, private endpoints, or GRS.
+4. Merge PR `#59` for issue `#55`, then watch the first scheduled/manual drift run to confirm separate drift issues per environment.
+5. Merge the issue `#60` static PR quality gate so workflow/Terraform syntax mistakes are caught before human review.
+6. Close stale issue hygiene for delivered workflow/bootstrap work if GitHub has not already caught up, especially issue `#43`.
+7. Then revisit additional dev hardening upgrades such as SAS policy, CMK, private endpoints, or GRS.
 
-## ROI Priority Order (2026-04-16)
+## ROI Priority Order (2026-04-25)
 
 ### Recommendation
 - Treat bootstrap/state recovery and the recent workflow cleanup as done unless drift or apply proves otherwise.
@@ -64,7 +67,7 @@
 1. Finish the staged dev-platform rollout path and keep the new GitHub Terraform coverage stable:
    - `#12`, `#50`, `#53`, `#55`
 2. Improve supply-chain and project automation with mostly engineering time, not cloud spend:
-   - `#28`, `#30`, `#38`, `#39`
+   - `#28`, `#30`, `#38`, `#39`, `#60`
 3. Close stale issue hygiene for recently delivered work:
    - `#1`, `#15`, `#43`
 
@@ -85,6 +88,6 @@
 2. Keep AKS work on `infra/envs/dev-platform` instead of adding more module-only hardening or mixing platform resources into `infra/envs/dev`.
 3. Use the new `infra/modules/network` foundation and the existing Log Analytics workspace lookup as the demo-ready dependency path.
 4. Keep AKS cost controlled: `enable_aks = false` remains the repo default, and intentional enables need an explicit teardown path.
-5. Finish issue `#55` so scheduled drift detection covers both active Terraform roots without cross-closing issues.
+5. After PR `#59` merges, verify scheduled drift detection covers both active Terraform roots without cross-closing issues.
 6. Keep docs aligned with the actual branch and merge state so planning does not outrun code again.
 7. Then return to the smallest application skeleton work.
