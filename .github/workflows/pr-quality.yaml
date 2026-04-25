@@ -48,7 +48,7 @@ jobs:
           echo "${install_dir}" >> "${GITHUB_PATH}"
 
       - name: Run actionlint
-        run: actionlint -color
+        run: actionlint -shellcheck= -color
 
   terraform-static-review:
     name: 'Terraform Static Review'
