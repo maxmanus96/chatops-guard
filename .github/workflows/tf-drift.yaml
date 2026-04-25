@@ -40,8 +40,6 @@ jobs:
       ARM_SKIP_PROVIDER_REGISTRATION: true
       TF_ENV: ${{ matrix.environment }}
       TF_ENV_DIR: infra/envs/${{ matrix.environment }}
-    outputs:
-      tfplanExitCode: ${{ steps.tf-plan.outputs.exitcode }}
 
     steps:
     # Checkout the repository to the GitHub Actions runner
