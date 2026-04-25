@@ -31,6 +31,7 @@ This file is a grouped planning view of the current backlog after the recent boo
   - [x] Add `enable_aks = false` so the first safe apply can create only the platform resource group
   - [x] Apply `infra/envs/dev-platform` once to create `rg-chatops-guard-platform-dev` without creating AKS
   - [x] Add `infra/modules/network` and apply the minimal dev VNet/subnet foundation
+  - [x] Associate the AKS node subnet with a minimal NSG so the subnet has an explicit network security boundary
   - [x] Replace the raw subnet input with `module.network.aks_node_subnet_id`
   - [x] Replace the raw Log Analytics workspace ID input with a workspace lookup by name and resource group
   - [x] Add `terraform.tfvars.example` so the safe-first-apply path and first AKS-enable path are both visible

@@ -12,6 +12,7 @@
 - `infra/modules/aks` exists as the first reusable platform module.
 - `infra/modules/network` now exists as a sibling module for the minimal VNet/subnet foundation.
 - `infra/envs/dev-platform` is the first thin non-bootstrap platform root that composes both modules. It now has its own backend/state, has safely applied `rg-chatops-guard-platform-dev` plus the first VNet/subnet foundation, and has already completed the first local `enable_aks = true` AKS apply with a clean post-apply plan.
+- The AKS node subnet now has a module-owned NSG association. The NSG intentionally starts without custom allow rules, relying on Azure default deny-inbound behavior while avoiding a risky broad inbound exception.
 - `infra/envs/dev-platform` now also requires `api_server_authorized_ip_ranges` when `enable_aks = true`, so the first public dev AKS apply does not expose the API server broadly by accident.
 - The first AKS rollout path was local-first: use an untracked `infra/envs/dev-platform/terraform.tfvars` for `enable_aks = true` plus a local `/32` admin IP. That proof is now done, and `dev-platform` participates in GitHub `tf-plan-apply`.
 - The current cost-aware AKS demo default is `Standard_D2as_v5`, not `Standard_D2_v2`. That is the best-ROI middle ground so far: materially cheaper than Dv2, more modern, and less memory-constrained than the ultra-cheap `A2_v2` candidate.
@@ -43,6 +44,7 @@
 | Diagnostics to Log Analytics | ✅ | Dev LA workspace with 30-day retention; diagnostics now target the blob service scope Azure actually supports. |
 | Blob versioning | ✅ | Kept enabled on the dev state account to improve tfstate recovery; extra blob storage cost should stay modest for this small dev backend. |
 | Checkov skips (dev) | ⚠️ | CKV2_AZURE_1, CKV_AZURE_206, CKV_AZURE_59, CKV2_AZURE_33, CKV_AZURE_33, CKV2_AZURE_21 (documented inline). |
+| AKS subnet NSG | ✅ | `infra/modules/network` associates the AKS node subnet with a minimal NSG; no broad inbound rules are added. |
 | SAS expiration policy | ⏳ | Terraform support limited; revisit when prod environment is built. |
 | Customer-managed keys | ⏳ | Requires Key Vault + key rotation; deferred for cost reasons. |
 | Private endpoints | ⏳ | Adds VNets/DNS and billing overhead; hold until prod readiness. |
