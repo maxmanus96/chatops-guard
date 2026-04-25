@@ -14,7 +14,7 @@ This file is a grouped planning view of the current backlog after the recent boo
 - Tasks:
   - [x] #14 INF-01 · Remote state RG & Storage
   - [x] #46 stale drift issue closed after the recovered `dev` root returned to clean drift behavior
-  - [ ] Close issue #43 now that `tf-drift` is working again
+  - [x] Close issue #43 now that `tf-drift` is working again
   - [ ] Reconcile or close #5 Draft terraform folder and do initial commit if the current repo already satisfies it
   - [ ] Keep #13 Seed backlog aligned with the infrastructure child issues that remain open
 
@@ -70,7 +70,7 @@ This file is a grouped planning view of the current backlog after the recent boo
 - Dependencies: issue hygiene cleanup after the recent merges, image naming/versioning strategy
 - Tasks:
   - [ ] #2 Add Ci&CD to the repo
-  - [ ] Close issue #43 now that the repaired `tf-drift` workflow is stable again
+  - [x] Close issue #43 now that the repaired `tf-drift` workflow is stable again
   - [x] #53 CI-04 · Add dev-platform to Terraform GitHub validation and plan/apply
   - [x] #55 Extend tf-drift to cover dev-platform with environment-aware drift issues
   - [x] #60 CI-05 · Static automated PR quality review gate
