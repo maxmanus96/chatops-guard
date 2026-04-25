@@ -15,7 +15,7 @@
 - `infra/envs/dev-platform` now also requires `api_server_authorized_ip_ranges` when `enable_aks = true`, so the first public dev AKS apply does not expose the API server broadly by accident.
 - The first AKS rollout path was local-first: use an untracked `infra/envs/dev-platform/terraform.tfvars` for `enable_aks = true` plus a local `/32` admin IP. That proof is now done, and `dev-platform` participates in GitHub `tf-plan-apply`.
 - The current cost-aware AKS demo default is `Standard_D2as_v5`, not `Standard_D2_v2`. That is the best-ROI middle ground so far: materially cheaper than Dv2, more modern, and less memory-constrained than the ultra-cheap `A2_v2` candidate.
-- The first demo AKS rollout originally kept local accounts enabled because disabling them on Kubernetes 1.25+ requires managed Entra / AAD integration. Issue `#52` is the slice that now wires managed Entra into Terraform so `local_account_disabled = true` becomes a valid next apply.
+- The first demo AKS rollout originally kept local accounts enabled because disabling them on Kubernetes 1.25+ requires managed Entra / AAD integration. Issue `#52` wired managed Entra into Terraform so `local_account_disabled = true` is now the intended AKS-enabled path.
 - For issue `#52`, the chosen access model is a dedicated Entra admin group, not an individual user object ID. That keeps AKS admin access transferable, reviewable, and easier to explain than binding cluster admin access to one person.
 - Issue `#52` keeps `azure_rbac_enabled = false` in the first managed Entra slice. That is intentional: the smallest useful change is authentication hardening plus disabling local accounts; Azure RBAC role design is a separate authorization rollout.
 
@@ -27,7 +27,7 @@
    - Executes TFLint/tfsec scoped to the same directory.
    - Uploads the per-environment plan artifact and computed exit code.
 3. Apply jobs download the matching artifact, inspect the exit code, and only run `terraform apply` when changes exist and the branch is `main`.
-4. `tf-drift` is now scoped to `infra/envs/dev`, uses Azure OIDC login, and should keep stale drift issues closed when no changes exist.
+4. `tf-drift` now runs in matrix mode for `dev` and `dev-platform`, uses Azure OIDC login, and creates or closes environment-specific drift issues.
 5. `tf-unit-tests.yaml` now validates the live `dev` root, `dev-platform`, and tolerates optional module paths, while `tf-destroy.yaml` provides a guarded manual destroy path for cost-control or teardown scenarios, including `dev-platform`.
 
 ## Security Hardening Status (Dev)
@@ -45,24 +45,24 @@
 | Geo-redundant replication | ⏳ | LRS kept for budget; document justification in code comment. |
 
 ## Next Steps
-1. Close stale issue hygiene for delivered workflow/bootstrap work if GitHub has not already caught up, especially issue `#43`.
+1. Refresh local Azure auth with `az login` before making any live cost claim about AKS or VMSS resources.
 2. Keep AKS disabled in `infra/envs/dev`; the bootstrap root should not silently grow into the long-term platform root.
-3. Keep AKS disabled by default until PR #51 is reviewed and the demo-risk tradeoff is accepted.
-4. Review the first GitHub runs that now include `dev-platform` and confirm the rollout behaves cleanly in Actions.
-5. Track managed Entra ID integration and `disableLocalAccounts=true` under issue `#52`.
+3. Keep AKS disabled by default for cost control unless there is an active demo/learning session and a clear teardown plan.
+4. Merge the issue `#55` drift update, then watch the first scheduled/manual run to confirm separate drift issues per environment.
+5. Close stale issue hygiene for delivered workflow/bootstrap work if GitHub has not already caught up, especially issue `#43`.
 6. Then revisit additional dev hardening upgrades such as SAS policy, CMK, private endpoints, or GRS.
 
 ## ROI Priority Order (2026-04-16)
 
 ### Recommendation
 - Treat bootstrap/state recovery and the recent workflow cleanup as done unless drift or apply proves otherwise.
-- Treat the next AKS slice as staged environment-composition work on `infra/envs/dev-platform`: guarded root, platform RG, minimal network foundation, first real AKS plan, and only then a deliberate cluster apply.
+- Treat the next AKS slice as controlled rollout work on `infra/envs/dev-platform`: keep the tracked default off, enable AKS only when needed, and destroy/disable it after demos if budget matters more than always-on availability.
 - Use issue `#12` as the architecture anchor until a dedicated follow-up AKS env-root issue exists.
 - Use umbrella issues such as `#2` and `#13` for tracking only; do not let them outrank the scoped implementation work.
 
 ### Highest ROI / lowest direct cloud cost
 1. Finish the staged dev-platform rollout path and keep the new GitHub Terraform coverage stable:
-   - `#12` plus `#50`
+   - `#12`, `#50`, `#53`, `#55`
 2. Improve supply-chain and project automation with mostly engineering time, not cloud spend:
    - `#28`, `#30`, `#38`, `#39`
 3. Close stale issue hygiene for recently delivered work:
@@ -84,8 +84,7 @@
 1. Reconcile issue hygiene for delivered infra and workflow work (`#1`, `#14`, `#15`, `#43`).
 2. Keep AKS work on `infra/envs/dev-platform` instead of adding more module-only hardening or mixing platform resources into `infra/envs/dev`.
 3. Use the new `infra/modules/network` foundation and the existing Log Analytics workspace lookup as the demo-ready dependency path.
-4. Keep PR #51 focused on the root/network/monitoring contract and the now-proven local AKS rollout.
-5. Land the follow-up CI PR for issue `#53` so `dev-platform` participates in GitHub Terraform validation and plan/apply.
-6. Handle managed Entra ID integration and local-account hardening in issue `#52`.
-7. Keep docs aligned with the actual branch and merge state so planning does not outrun code again.
-8. Then return to the smallest application skeleton work.
+4. Keep AKS cost controlled: `enable_aks = false` remains the repo default, and intentional enables need an explicit teardown path.
+5. Finish issue `#55` so scheduled drift detection covers both active Terraform roots without cross-closing issues.
+6. Keep docs aligned with the actual branch and merge state so planning does not outrun code again.
+7. Then return to the smallest application skeleton work.

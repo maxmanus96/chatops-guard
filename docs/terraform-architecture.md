@@ -20,7 +20,7 @@ The repository already has a live `dev` Terraform layout under `infra/envs/dev` 
 - When `enable_aks = true`, the root now also requires explicit `api_server_authorized_ip_ranges` so the first public dev cluster does not accidentally expose its API to the world.
 - The first AKS rollout path is intentionally local-first: a local untracked `infra/envs/dev-platform/terraform.tfvars` can enable AKS and carry the operator's `/32` admin IP without turning that machine-specific data into a repo default.
 - The current cost-aware AKS demo default is `Standard_D2as_v5`. B-series was not chosen because Microsoft documents it as unsupported for system node pools, and `A2_v2` was not chosen as the default because the lower memory headroom is a weaker fit for a one-node demo cluster with system addons.
-- The first demo AKS rollout originally kept local accounts enabled because AKS rejects that setting on Kubernetes 1.25+ clusters without managed Entra / AAD integration first. Issue `#52` is the slice that now wires managed Entra into Terraform so `local_account_disabled = true` becomes a valid next apply.
+- The first demo AKS rollout originally kept local accounts enabled because AKS rejects that setting on Kubernetes 1.25+ clusters without managed Entra / AAD integration first. Issue `#52` wired managed Entra into Terraform so `local_account_disabled = true` is now the intended AKS-enabled path.
 - For issue `#52`, the chosen identity model is a dedicated Entra admin group rather than a personal user object. That keeps admin access transferable and avoids baking one person's object ID into the cluster access story.
 - Issue `#52` intentionally keeps `azure_rbac_enabled = false`. That is the higher-ROI sequence: land managed authentication and disable local accounts first, then introduce Azure RBAC only when its role model is designed on purpose.
 
@@ -89,8 +89,9 @@ Why the name is explicit right now:
 
 The network side is now handled by `infra/modules/network`, and the monitoring side is resolved through an explicit Log Analytics workspace lookup from the existing bootstrap resources.
 
-That local rollout proof is now done. The next real decisions are:
-- land the focused follow-up CI slice in issue `#53` so `infra/envs/dev-platform` participates in GitHub Terraform validation and plan/apply
-- handle managed Entra ID integration in issue `#52`
+That local rollout proof is now done, and GitHub Terraform validation/plan/apply already includes `dev-platform`. The next real decisions are:
+- keep issue `#55` focused on environment-aware drift coverage for both `dev` and `dev-platform`
+- verify live Azure cost state after refreshing `az login`, then only run AKS when there is an active demo/learning need
+- defer Azure RBAC and private-cluster work until the demo cluster access model needs those controls
 
 That keeps the already-applied `dev` state stable while moving AKS work from module-only scaffolding toward real environment composition.
