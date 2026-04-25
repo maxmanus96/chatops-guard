@@ -1,0 +1,36 @@
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 3
+
+  - package-ecosystem: "terraform"
+    directory: "/infra/envs/dev"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 3
+
+  - package-ecosystem: "terraform"
+    directory: "/infra/envs/dev-platform"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 3
+
+  - package-ecosystem: "terraform"
+    directory: "/infra/modules/aks"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 3
+
+  - package-ecosystem: "terraform"
+    directory: "/infra/modules/network"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 3

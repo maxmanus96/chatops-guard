@@ -72,6 +72,7 @@ This file is a grouped planning view of the current backlog after the recent boo
   - [ ] Close issue #43 now that the repaired `tf-drift` workflow is stable again
   - [x] #53 CI-04 · Add dev-platform to Terraform GitHub validation and plan/apply
   - [x] #55 Extend tf-drift to cover dev-platform with environment-aware drift issues
+  - [x] #60 CI-05 · Static automated PR quality review gate
   - [ ] #28 SEC-01 · Trivy image + IaC scan gate
   - [ ] #30 SEC-03 · SBOM generation & upload
   - [ ] #31 CI-01 · Build & push images to ACR
