@@ -23,6 +23,7 @@
 1. `tf-plan-apply` workflow (GitHub Actions) runs in matrix mode over `TF_TARGET_ENVS` (defaults to `["dev","dev-platform"]`) and rejects unsupported environment names before Azure login.
 2. Each matrix job:
    - Logs into Azure with OIDC.
+   - Uses `AZURE_PLAN_CLIENT_ID` for plan jobs and `AZURE_APPLY_CLIENT_ID` for apply jobs, falling back to legacy `AZURE_CLIENT_ID` until split identities are configured.
    - Runs Terraform init/fmt/validate/plan under `infra/envs/<env>` using `-chdir`.
    - Executes TFLint/tfsec scoped to the same directory.
    - Uploads the per-environment plan artifact and computed exit code.
@@ -30,7 +31,8 @@
 4. `tf-drift` now runs in matrix mode for `dev` and `dev-platform`, uses Azure OIDC login, creates or closes environment-specific drift issues, and publishes redacted count summaries instead of full plan text in issues.
 5. `pr-quality.yaml` provides static automated PR review without Azure login: workflow linting via `actionlint` plus Terraform `fmt/init/validate` over the active roots/modules.
 6. Dependabot is enabled for GitHub Actions and Terraform provider updates so dependency bumps arrive as reviewable PRs instead of silent drift.
-7. `tf-unit-tests.yaml` now validates the live `dev` root, `dev-platform`, and tolerates optional module paths, while `tf-destroy.yaml` provides a guarded manual destroy path for cost-control or teardown scenarios. Destroy defaults to `dev-platform`; destroying `dev` requires an extra bootstrap/state confirmation phrase.
+7. `tf-unit-tests.yaml` now validates the live `dev` root, `dev-platform`, and local modules, and Checkov SARIF now covers both active roots.
+8. `tf-destroy.yaml` provides a guarded manual destroy path for cost-control or teardown scenarios. Destroy defaults to `dev-platform`; destroying `dev` requires an extra bootstrap/state confirmation phrase.
 
 ## Security Hardening Status (Dev)
 | Control | Status | Notes |
@@ -51,8 +53,8 @@
 2. Keep AKS disabled in `infra/envs/dev`; the bootstrap root should not silently grow into the long-term platform root.
 3. Keep AKS disabled by default for cost control unless there is an active demo/learning session and a clear teardown plan.
 4. Watch the first scheduled/manual drift run from merged PR `#59` to confirm separate drift issues per environment.
-5. Land the first issue `#62` workflow-guardrail slice: environment allowlists, safer destroy defaults, and redacted drift/destroy summaries.
-6. Continue issue `#62` with Azure OIDC least-privilege identity split and broader Checkov coverage.
+5. Merge the issue `#62` workflow/security PR, then configure split Azure identities in GitHub secrets when ready.
+6. After split identities are proven, remove the legacy `AZURE_CLIENT_ID` fallback from Terraform workflows.
 7. Close stale issue hygiene for delivered workflow/bootstrap work if GitHub has not already caught up, especially issue `#43`.
 8. Then revisit additional dev hardening upgrades such as SAS policy, CMK, private endpoints, or GRS.
 

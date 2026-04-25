@@ -5,7 +5,8 @@
 # Usage:
 #   GH_REPO="maxmanus96/chatops-guard" ./scripts/init_infra.sh
 # Optional env vars you can override:
-#   LOCATION (westeurope), STATE_RG, SA_NAME, CONTAINER, APP_NAME, BRANCH
+#   LOCATION (westeurope), STATE_RG, SA_NAME, CONTAINER, APP_NAME, BRANCH,
+#   CREATE_LEGACY_PR_CREDENTIAL
 
 # -----------------------------------------------------------------------------
 # and how to run? (see following lines as example)
@@ -25,6 +26,7 @@ CONTAINER="${CONTAINER:-tfstate}"
 APP_NAME="${APP_NAME:-chatops-guard-gh}"         # Azure AD application (service principal)
 BRANCH="${BRANCH:-main}"                         # branch for OIDC subject
 SET_GH_SECRETS="${SET_GH_SECRETS:-false}"        # true to push secrets with gh CLI
+CREATE_LEGACY_PR_CREDENTIAL="${CREATE_LEGACY_PR_CREDENTIAL:-false}"
 # -----------------------------------------------------------------------------
 
 need() { command -v "$1" >/dev/null || { echo "✖ Missing '$1'"; exit 1; }; }
@@ -95,29 +97,39 @@ az ad app federated-credential create --id "$APP_ID" \
   --issuer "https://token.actions.githubusercontent.com" \
   --audience "api://AzureADTokenExchange" \
   --subject "$SUBJECT" >/dev/null 2>&1 || true
-az ad app federated-credential create --id "$APP_ID" --parameters '{
-  "name": "gha-pr",
-  "issuer": "https://token.actions.githubusercontent.com",
-  "subject": "repo:maxmanus96/chatops-guard:pull_request",
-  "audiences": ["api://AzureADTokenExchange"]
-}'
+if [[ "$CREATE_LEGACY_PR_CREDENTIAL" == "true" ]]; then
+  echo "⚠ Creating a pull_request credential on the broad write identity. Prefer AZURE_PLAN_CLIENT_ID for PR planning."
+  az ad app federated-credential create --id "$APP_ID" --parameters '{
+    "name": "gha-pr",
+    "issuer": "https://token.actions.githubusercontent.com",
+    "subject": "repo:maxmanus96/chatops-guard:pull_request",
+    "audiences": ["api://AzureADTokenExchange"]
+  }' >/dev/null 2>&1 || true
+else
+  echo "✓ Skipping pull_request credential for the broad write identity."
+  echo "  Create a separate read/plan identity and set AZURE_PLAN_CLIENT_ID for PR planning."
+fi
 
 echo "▶ Assigning roles…"
 SCOPE_SUB="/subscriptions/$SUBSCRIPTION_ID"
-# Contributor at subscription (simple); you can later narrow to RG scopes
+# Contributor at subscription is the legacy bootstrap path. Narrow this after
+# bootstrap by using separate AZURE_PLAN_CLIENT_ID and AZURE_APPLY_CLIENT_ID
+# identities documented in docs/azure-oidc-least-privilege.md.
 az role assignment create --assignee "$APP_ID" --role "Contributor" --scope "$SCOPE_SUB" >/dev/null 2>&1 || true
 # Storage Blob Data Contributor on the state storage account
 az role assignment create --assignee "$APP_ID" --role "Storage Blob Data Contributor" --scope "$SA_ID" >/dev/null 2>&1 || true
 echo "✓ Role assignments ensured."
 
 echo "▶ GitHub secrets payload:"
-echo "   AZURE_CLIENT_ID=$APP_ID"
+echo "   AZURE_APPLY_CLIENT_ID=$APP_ID"
+echo "   AZURE_CLIENT_ID=$APP_ID  # legacy fallback used until split identities are configured"
 echo "   AZURE_TENANT_ID=$TENANT_ID"
 echo "   AZURE_SUBSCRIPTION_ID=$SUBSCRIPTION_ID"
 
 if [[ "$SET_GH_SECRETS" == "true" ]]; then
   need gh
   echo "▶ Writing GitHub repo secrets to $GH_REPO …"
+  gh secret set AZURE_APPLY_CLIENT_ID  -R "$GH_REPO" -b "$APP_ID"
   gh secret set AZURE_CLIENT_ID        -R "$GH_REPO" -b "$APP_ID"
   gh secret set AZURE_TENANT_ID        -R "$GH_REPO" -b "$TENANT_ID"
   gh secret set AZURE_SUBSCRIPTION_ID  -R "$GH_REPO" -b "$SUBSCRIPTION_ID"

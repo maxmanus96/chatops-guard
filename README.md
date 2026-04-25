@@ -119,6 +119,7 @@ Configuration details and examples will be documented as features are implemente
 - The first AKS rollout path was intentionally local-first to prove the cluster create with an untracked `infra/envs/dev-platform/terraform.tfvars` and a local `/32` admin IP.
 - GitHub Terraform workflows now target both `dev` and `dev-platform` by default, so future AKS Terraform changes can be planned/applied from Actions as well. Drift detection also checks both roots, keeps drift issues environment-specific, and publishes count summaries instead of full Terraform plans in issues.
 - Terraform workflow guardrails now reject unsupported matrix environments before Azure login. Manual destroy defaults to `dev-platform`; destroying the `dev` bootstrap/state root requires an extra bootstrap confirmation phrase.
+- Terraform workflows are ready for split Azure OIDC identities: `AZURE_PLAN_CLIENT_ID` for plan/drift, `AZURE_APPLY_CLIENT_ID` for apply/destroy, and `AZURE_CLIENT_ID` only as a legacy fallback during migration.
 - PR review guardrails now include a static, no-Azure-login quality workflow for GitHub Actions syntax (`actionlint`) and Terraform `fmt/init/validate`, plus Dependabot PRs for GitHub Actions and Terraform provider updates.
 - The current cost-aware demo default for AKS nodes is `Standard_D2as_v5`, not `Standard_D2_v2`. That is the current best-ROI middle ground: materially cheaper than Dv2, more modern, and less memory-constrained than the ultra-cheap `A2_v2` candidate.
 - B-series was not chosen for the demo default because Microsoft documents B-series VMs as unsupported for AKS system node pools.
@@ -138,6 +139,7 @@ Configuration details and examples will be documented as features are implemente
 - Budget-conscious items still pending for dev (tracked in [plan.md](plan.md)):
   - Geo-redundant replication (CKV_AZURE_206) intentionally left as LRS to minimize cost.
   - Customer-managed keys (CKV2_AZURE_1), SAS expiration policy (CKV2_AZURE_41), and private endpoints (CKV2_AZURE_33) are deferred until prod hardening.
+- Azure OIDC least-privilege migration details are documented in [docs/azure-oidc-least-privilege.md](docs/azure-oidc-least-privilege.md).
 
 ## Contributing
 
