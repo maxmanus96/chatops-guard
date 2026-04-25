@@ -29,12 +29,17 @@ env:
 
 jobs:
   terraform-plan:
-    name: 'Terraform Plan'
+    name: 'Terraform Plan (${{ matrix.environment }})'
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        environment: ${{ fromJson(vars.TF_DRIFT_TARGET_ENVS || vars.TF_TARGET_ENVS || '["dev","dev-platform"]') }}
     env:
       #this is needed since we are running terraform with read-only permissions
       ARM_SKIP_PROVIDER_REGISTRATION: true
-      TF_ENV_DIR: infra/envs/dev
+      TF_ENV: ${{ matrix.environment }}
+      TF_ENV_DIR: infra/envs/${{ matrix.environment }}
     outputs:
       tfplanExitCode: ${{ steps.tf-plan.outputs.exitcode }}
 
@@ -81,7 +86,7 @@ jobs:
     - name: Publish Terraform Plan
       uses: actions/upload-artifact@v4
       with:
-        name: tfplan
+        name: tfplan-drift-${{ matrix.environment }}
         path: ${{ env.TF_ENV_DIR }}/tfplan
         
     # Create string output of Terraform Plan
@@ -92,7 +97,7 @@ jobs:
         
         delimiter="$(openssl rand -hex 8)"
         echo "summary<<${delimiter}" >> $GITHUB_OUTPUT
-        echo "## Terraform Plan Output" >> $GITHUB_OUTPUT
+        echo "## Terraform Plan Output (${TF_ENV})" >> $GITHUB_OUTPUT
         echo "<details><summary>Click to expand</summary>" >> $GITHUB_OUTPUT
         echo "" >> $GITHUB_OUTPUT
         echo '```terraform' >> $GITHUB_OUTPUT
@@ -109,16 +114,17 @@ jobs:
         echo "$SUMMARY" >> $GITHUB_STEP_SUMMARY
 
     # If changes are detected, create a new issue
-    - name: Publish Drift Report
+    - name: Open or update drift issue
       if: steps.tf-plan.outputs.exitcode == 2
       uses: actions/github-script@v7
       env:
+        TF_ENV: "${{ env.TF_ENV }}"
         SUMMARY: "${{ steps.tf-plan-string.outputs.summary }}"
       with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const body = `${process.env.SUMMARY}`;
-            const title = 'Terraform Configuration Drift Detected';
+            const title = `Terraform Configuration Drift Detected (${process.env.TF_ENV})`;
             const creator = 'github-actions[bot]'
           
             // Look to see if there is an existing drift issue
@@ -126,7 +132,8 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               state: 'open',
-              creator: creator
+              creator: creator,
+              per_page: 100
             })
               
             const issue = issues.data.find((candidate) => candidate.title === title)
@@ -155,13 +162,15 @@ jobs:
             }
             
     # If changes aren't detected, close any open drift issues
-    - name: Publish Drift Report
+    - name: Close resolved drift issue
       if: steps.tf-plan.outputs.exitcode == 0
       uses: actions/github-script@v7
+      env:
+        TF_ENV: "${{ env.TF_ENV }}"
       with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const title = 'Terraform Configuration Drift Detected';
+            const title = `Terraform Configuration Drift Detected (${process.env.TF_ENV})`;
             const creator = 'github-actions[bot]'
           
             // Look to see if there is an existing drift issue
@@ -169,7 +178,8 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               state: 'open',
-              creator: creator
+              creator: creator,
+              per_page: 100
             })
               
             const issue = issues.data.find((candidate) => candidate.title === title)

@@ -35,6 +35,7 @@ Do not assume the README roadmap already exists in code.
 - If that final answer is `No`, immediately explain the confusing concept simply in this exact project context with one example before ending the block.
 - Keep changes minimal, reviewable, and easy to validate.
 - Prefer correctness, idempotence, least privilege, and clear rollback paths.
+- Treat budget as a first-class constraint. Default to cost-effective supported options, call out meaningful Azure cost impact early, and prefer staged or teardown-friendly designs over always-on spend unless the user explicitly accepts the cost.
 - Keep dev and prod separation intact. Do not broaden `TF_TARGET_ENVS` or enable prod by accident.
 - Preserve intentional dev tradeoffs unless the task is explicitly to harden them.
 - When changing Terraform, update supporting docs if behavior, security posture, or cost posture changes.

@@ -1,6 +1,6 @@
 # TODO
 
-Source: GitHub issues plus merged infra/CI work refreshed on 2026-04-16.
+Source: GitHub issues plus merged infra/CI work refreshed on 2026-04-25.
 
 This file is a grouped planning view of the current backlog after the recent bootstrap/state recovery work. Some older issues are now delivered in merged PRs and are shown here as completion or cleanup notes rather than as active implementation tasks.
 
@@ -40,13 +40,13 @@ This file is a grouped planning view of the current backlog after the recent boo
   - [x] Keep `local_account_disabled = false` for the first demo cluster until managed AAD integration exists
   - [x] Prove the first local `enable_aks = true` apply from `infra/envs/dev-platform`
   - [x] Add `dev-platform` GitHub validation/plan-apply follow-up issue `#53`
-  - [ ] #52 INF-07 · AKS managed Entra ID integration and disable local accounts
+  - [x] #52 INF-07 · AKS managed Entra ID integration and disable local accounts
   - [x] Choose a dedicated Entra admin group instead of a personal user object for AKS admin access
   - [x] Create the dev demo admin group `grp-chatops-guard-aks-admins-dev` and add the current operator to it
   - [x] Wire the dedicated Entra admin group into the AKS Terraform path
   - [x] Keep Azure RBAC out of the first Entra slice so scope stays on managed authentication plus disabling local accounts
-  - [ ] Apply and verify the managed Entra update against the live dev AKS cluster
-  - [ ] #57 Reduce dev-platform AKS demo node cost before tracked rollout
+  - [ ] Verify managed Entra behavior during the next intentionally enabled AKS rollout
+  - [x] #57 Reduce dev-platform AKS demo node cost before tracked rollout
   - [ ] Keep AKS design decisions explicit: egress, admin access path, private-cluster timing
   - [ ] #16 INF-03 · Event Grid + Topic
   - [ ] #17 INF-04 · Azure OpenAI (private endpoint)
@@ -70,7 +70,8 @@ This file is a grouped planning view of the current backlog after the recent boo
 - Tasks:
   - [ ] #2 Add Ci&CD to the repo
   - [ ] Close issue #43 now that the repaired `tf-drift` workflow is stable again
-  - [ ] #53 CI-04 · Add dev-platform to Terraform GitHub validation and plan/apply
+  - [x] #53 CI-04 · Add dev-platform to Terraform GitHub validation and plan/apply
+  - [x] #55 Extend tf-drift to cover dev-platform with environment-aware drift issues
   - [ ] #28 SEC-01 · Trivy image + IaC scan gate
   - [ ] #30 SEC-03 · SBOM generation & upload
   - [ ] #31 CI-01 · Build & push images to ACR
