@@ -75,6 +75,7 @@ This file is a grouped planning view of the current backlog after the recent boo
   - [x] #55 Extend tf-drift to cover dev-platform with environment-aware drift issues
   - [x] #60 CI-05 · Static automated PR quality review gate
   - [x] #62 SEC-04 · Harden Terraform workflow guardrails and Azure OIDC least privilege
+  - [x] #70 DEVX-01 · Add local validation runner and Wiki starter docs
   - [ ] After split Azure identities are proven, remove the legacy `AZURE_CLIENT_ID` fallback from Terraform workflows
   - [ ] #28 SEC-01 · Trivy image + IaC scan gate
   - [ ] #30 SEC-03 · SBOM generation & upload
