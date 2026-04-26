@@ -15,6 +15,11 @@ need() {
 ROOT_DIR="$(git rev-parse --show-toplevel)"
 cd "$ROOT_DIR"
 
+# Keep Azure CLI session writes out of sandboxed or read-only home directories.
+export AZURE_CONFIG_DIR="${AZURE_CONFIG_DIR:-${TMPDIR:-/tmp}/chatops-guard-azure-cli}"
+mkdir -p "$AZURE_CONFIG_DIR"
+TF_DATA_ROOT="$(mktemp -d "${TMPDIR:-/tmp}/chatops-guard-tfdata.XXXXXX")"
+
 need actionlint
 need checkov
 need python3
@@ -67,8 +72,10 @@ terraform fmt -check -recursive infra
 section "Terraform init and validate"
 for dir in "${terraform_dirs[@]}"; do
   printf '\n-- %s\n' "$dir"
-  terraform -chdir="$dir" init -backend=false -input=false
-  terraform -chdir="$dir" validate
+  tf_data_dir="${TF_DATA_ROOT}/${dir//\//_}"
+  mkdir -p "$tf_data_dir"
+  TF_DATA_DIR="$tf_data_dir" terraform -chdir="$dir" init -backend=false -input=false
+  TF_DATA_DIR="$tf_data_dir" terraform -chdir="$dir" validate
 done
 
 section "Checkov active Terraform roots"

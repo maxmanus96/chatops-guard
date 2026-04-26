@@ -28,13 +28,14 @@
    - Runs Terraform init/fmt/validate/plan under `infra/envs/<env>` using `-chdir`.
    - Executes TFLint/tfsec scoped to the same directory.
    - Uploads the per-environment plan artifact and computed exit code.
-3. Apply jobs download the matching artifact, inspect the exit code, and only run `terraform apply` when changes exist and the branch is `main`.
-4. `tf-drift` now runs in matrix mode for `dev` and `dev-platform`, uses Azure OIDC login, creates or closes environment-specific drift issues, and publishes redacted count summaries instead of full plan text in issues.
-5. `pr-quality.yaml` provides static automated PR review without Azure login: workflow linting via `actionlint` plus Terraform `fmt/init/validate` over the active roots/modules.
-6. Dependabot is enabled for GitHub Actions and Terraform provider updates so dependency bumps arrive as reviewable PRs instead of silent drift.
-7. `tf-unit-tests.yaml` now validates the live `dev` root, `dev-platform`, and local modules, and Checkov SARIF now covers both active roots.
-8. `tf-destroy.yaml` provides a guarded manual destroy path for cost-control or teardown scenarios. Destroy defaults to `dev-platform`; destroying `dev` requires an extra bootstrap/state confirmation phrase.
-9. `scripts/local_validate.sh` mirrors the low-cost local checks before push: YAML parsing, `actionlint`, Terraform format/init/validate, and Checkov for the active Terraform roots.
+3. Dependabot pull requests intentionally skip the Azure OIDC Terraform plan path because Dependabot does not receive the normal Azure secrets. Static PR Quality Review and Terraform Unit Tests remain the low-cost validation signal for dependency bumps.
+4. Apply jobs download the matching artifact, inspect the exit code, and only run `terraform apply` when changes exist and the branch is `main`.
+5. `tf-drift` now runs in matrix mode for `dev` and `dev-platform`, uses Azure OIDC login, creates or closes environment-specific drift issues, and publishes redacted count summaries instead of full plan text in issues.
+6. `pr-quality.yaml` provides static automated PR review without Azure login: workflow linting via `actionlint` plus Terraform `fmt/init/validate` over the active roots/modules.
+7. Dependabot is enabled for GitHub Actions and Terraform provider updates so dependency bumps arrive as reviewable PRs instead of silent drift.
+8. `tf-unit-tests.yaml` now validates the live `dev` root, `dev-platform`, and local modules, and Checkov SARIF now covers both active roots.
+9. `tf-destroy.yaml` provides a guarded manual destroy path for cost-control or teardown scenarios. Destroy defaults to `dev-platform`; destroying `dev` requires an extra bootstrap/state confirmation phrase.
+10. `scripts/local_validate.sh` mirrors the low-cost local checks before push: YAML parsing, `actionlint`, Terraform format/init/validate, and Checkov for the active Terraform roots.
 
 ## Security Hardening Status (Dev)
 | Control | Status | Notes |
@@ -56,10 +57,11 @@
 2. Keep AKS disabled in `infra/envs/dev`; the bootstrap root should not silently grow into the long-term platform root.
 3. Keep AKS disabled by default for cost control unless there is an active demo/learning session and a clear teardown plan.
 4. Watch the first scheduled/manual drift run from merged PR `#59` to confirm separate drift issues per environment.
-5. Configure split Azure identities in GitHub secrets when ready: `AZURE_PLAN_CLIENT_ID` for plan/drift and `AZURE_APPLY_CLIENT_ID` for apply/destroy.
-6. After split identities are proven, remove the legacy `AZURE_CLIENT_ID` fallback from Terraform workflows.
-7. Continue stale issue hygiene for delivered workflow/bootstrap work if GitHub has not already caught up.
-8. Then revisit additional dev hardening upgrades such as SAS policy, CMK, private endpoints, or GRS.
+5. Merge the local validation / Dependabot guard PR, then use it to triage Dependabot bumps locally before spending GitHub Actions minutes.
+6. Configure split Azure identities in GitHub secrets when ready: `AZURE_PLAN_CLIENT_ID` for plan/drift and `AZURE_APPLY_CLIENT_ID` for apply/destroy.
+7. After split identities are proven, remove the legacy `AZURE_CLIENT_ID` fallback from Terraform workflows.
+8. Continue stale issue hygiene for delivered workflow/bootstrap work if GitHub has not already caught up.
+9. Then revisit additional dev hardening upgrades such as SAS policy, CMK, private endpoints, or GRS.
 
 ## ROI Priority Order (2026-04-25)
 
