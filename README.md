@@ -120,7 +120,7 @@ Configuration details and examples will be documented as features are implemente
 - GitHub Terraform workflows now target both `dev` and `dev-platform` by default, so future AKS Terraform changes can be planned/applied from Actions as well. Drift detection also checks both roots, keeps drift issues environment-specific, and publishes count summaries instead of full Terraform plans in issues.
 - Terraform workflow guardrails now reject unsupported matrix environments before Azure login. Manual destroy defaults to `dev-platform`; destroying the `dev` bootstrap/state root requires an extra bootstrap confirmation phrase.
 - Terraform workflows are ready for split Azure OIDC identities: `AZURE_PLAN_CLIENT_ID` for plan/drift, `AZURE_APPLY_CLIENT_ID` for apply/destroy, and `AZURE_CLIENT_ID` only as a legacy fallback during migration.
-- PR review guardrails now include a static, no-Azure-login quality workflow for GitHub Actions syntax (`actionlint`) and Terraform `fmt/init/validate`, plus Dependabot PRs for GitHub Actions and Terraform provider updates.
+- PR review guardrails now include a static, no-Azure-login quality workflow for GitHub Actions syntax (`actionlint`) and Terraform `fmt/init/validate`, plus Dependabot PRs for GitHub Actions and Terraform provider updates. Dependabot pull requests intentionally skip Azure OIDC Terraform plans because Dependabot does not receive the normal Azure secrets; static PR Quality Review and Terraform Unit Tests are the low-cost validation path for those bumps.
 - The current cost-aware demo default for AKS nodes is `Standard_D2as_v5`, not `Standard_D2_v2`. That is the current best-ROI middle ground: materially cheaper than Dv2, more modern, and less memory-constrained than the ultra-cheap `A2_v2` candidate.
 - B-series was not chosen for the demo default because Microsoft documents B-series VMs as unsupported for AKS system node pools.
 - The first demo AKS cluster originally kept local accounts enabled because disabling them on Kubernetes 1.25+ requires managed Entra ID integration. Issue `#52` wired that managed Entra path into Terraform so the next AKS-enabled apply can keep `local_account_disabled` on deliberately instead of by demo shortcut.
@@ -166,6 +166,8 @@ flatpak-spawn --host toolbox run -c dev bash -lc 'cd /var/home/maxmanus/Dokument
 ```
 
 The helper checks the same low-cost path we care about locally: workflow YAML parsing, `actionlint`, Terraform format/init/validate, and Checkov scans for the active Terraform roots. The expected toolbox tools are Terraform, Checkov, PyYAML, Ruby, and actionlint.
+
+Running GitHub Actions locally is only partial. Use `scripts/local_validate.sh` for the reliable local signal; tools such as `act` can emulate some workflow shell steps, but they do not faithfully prove GitHub OIDC, repository secrets, SARIF upload permissions, branch protections, or hosted-runner behavior.
 
 The GitHub Wiki should stay a navigation layer, not a second source of truth. A starter Wiki page is tracked at [docs/wiki/Home.md](docs/wiki/Home.md) so changes remain reviewable before being copied or synced to the GitHub Wiki.
 
