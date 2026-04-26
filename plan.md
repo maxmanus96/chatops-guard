@@ -11,7 +11,8 @@
 - `infra/envs/prod` remains a dormant placeholder.
 - `infra/modules/aks` exists as the first reusable platform module.
 - `infra/modules/network` now exists as a sibling module for the minimal VNet/subnet foundation.
-- `infra/envs/dev-platform` is the first thin non-bootstrap platform root that composes both modules. It now has its own backend/state, has safely applied `rg-chatops-guard-platform-dev` plus the first VNet/subnet foundation, and has already completed the first local `enable_aks = true` AKS apply with a clean post-apply plan.
+- `infra/modules/event-grid` now exists as the first event-ingestion platform module. It creates a Basic/Event Grid custom topic only; subscriptions and consumers are intentionally deferred to later event-pipeline work.
+- `infra/envs/dev-platform` is the first thin non-bootstrap platform root that composes the platform modules. It now has its own backend/state, has safely applied `rg-chatops-guard-platform-dev` plus the first VNet/subnet foundation, and has already completed the first local `enable_aks = true` AKS apply with a clean post-apply plan.
 - The AKS node subnet now has a module-owned NSG association. The NSG intentionally starts without custom allow rules, relying on Azure default deny-inbound behavior while avoiding a risky broad inbound exception.
 - `infra/envs/dev-platform` now also requires `api_server_authorized_ip_ranges` when `enable_aks = true`, so the first public dev AKS apply does not expose the API server broadly by accident.
 - The first AKS rollout path was local-first: use an untracked `infra/envs/dev-platform/terraform.tfvars` for `enable_aks = true` plus a local `/32` admin IP. That proof is now done, and `dev-platform` participates in GitHub `tf-plan-apply`.
@@ -19,6 +20,7 @@
 - The first demo AKS rollout originally kept local accounts enabled because disabling them on Kubernetes 1.25+ requires managed Entra / AAD integration. Issue `#52` wired managed Entra into Terraform so `local_account_disabled = true` is now the intended AKS-enabled path.
 - For issue `#52`, the chosen access model is a dedicated Entra admin group, not an individual user object ID. That keeps AKS admin access transferable, reviewable, and easier to explain than binding cluster admin access to one person.
 - Issue `#52` keeps `azure_rbac_enabled = false` in the first managed Entra slice. That is intentional: the smallest useful change is authentication hardening plus disabling local accounts; Azure RBAC role design is a separate authorization rollout.
+- Issue `#16` adds the first Event Grid custom topic in `dev-platform`. The ROI choice is Basic/custom topic, not Event Grid Namespace, because the current application path needs simple event publish/subscribe before MQTT, pull delivery, or higher-throughput namespace features.
 
 ## CI/CD Flow
 1. `tf-plan-apply` workflow (GitHub Actions) runs in matrix mode over `TF_TARGET_ENVS` (defaults to `["dev","dev-platform"]`) and rejects unsupported environment names before Azure login.
@@ -47,6 +49,9 @@
 | Blob versioning | ✅ | Kept enabled on the dev state account to improve tfstate recovery; extra blob storage cost should stay modest for this small dev backend. |
 | Checkov skips (dev) | ⚠️ | CKV2_AZURE_1, CKV_AZURE_206, CKV_AZURE_59, CKV2_AZURE_33, CKV_AZURE_33, CKV2_AZURE_21 (documented inline). |
 | AKS subnet NSG | ✅ | `infra/modules/network` associates the AKS node subnet with a minimal NSG; no broad inbound rules are added. |
+| Event Grid local auth | ✅ | The first custom topic disables local key auth so future publishing can use Entra ID/RBAC instead of shared keys. |
+| Event Grid public access | ✅ | Public network access is disabled on the first topic; the later event-pipeline work must deliberately choose private endpoint or a temporary dev publishing exception. |
+| Event Grid private endpoint | ⏳ | Private endpoint wiring is deferred until a publisher/consumer path exists, avoiding private-link cost and DNS complexity before it is useful. |
 | SAS expiration policy | ⏳ | Terraform support limited; revisit when prod environment is built. |
 | Customer-managed keys | ⏳ | Requires Key Vault + key rotation; deferred for cost reasons. |
 | Private endpoints | ⏳ | Adds VNets/DNS and billing overhead; hold until prod readiness. |
@@ -57,7 +62,7 @@
 2. Keep AKS disabled in `infra/envs/dev`; the bootstrap root should not silently grow into the long-term platform root.
 3. Keep AKS disabled by default for cost control unless there is an active demo/learning session and a clear teardown plan.
 4. Watch the first scheduled/manual drift run from merged PR `#59` to confirm separate drift issues per environment.
-5. Merge the local validation / Dependabot guard PR, then use it to triage Dependabot bumps locally before spending GitHub Actions minutes.
+5. Apply the issue `#16` Event Grid topic from `dev-platform`, then keep later subscriptions/queue/summariser work in separate PRs.
 6. Configure split Azure identities in GitHub secrets when ready: `AZURE_PLAN_CLIENT_ID` for plan/drift and `AZURE_APPLY_CLIENT_ID` for apply/destroy.
 7. After split identities are proven, remove the legacy `AZURE_CLIENT_ID` fallback from Terraform workflows.
 8. Continue stale issue hygiene for delivered workflow/bootstrap work if GitHub has not already caught up.

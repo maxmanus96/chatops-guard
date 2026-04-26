@@ -27,6 +27,19 @@ module "network" {
   tags                     = local.tags
 }
 
+module "event_grid" {
+  count  = var.enable_event_grid ? 1 : 0
+  source = "../../modules/event-grid"
+
+  resource_group_name           = azurerm_resource_group.platform.name
+  location                      = azurerm_resource_group.platform.location
+  topic_name                    = var.event_grid_topic_name
+  input_schema                  = var.event_grid_input_schema
+  public_network_access_enabled = var.event_grid_public_network_access_enabled
+  local_auth_enabled            = var.event_grid_local_auth_enabled
+  tags                          = local.tags
+}
+
 data "azurerm_log_analytics_workspace" "logs" {
   name                = var.log_analytics_workspace_name
   resource_group_name = var.log_analytics_resource_group_name

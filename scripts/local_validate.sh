@@ -31,8 +31,8 @@ terraform_dirs=(
   infra/envs/dev-platform
 )
 
-for module_dir in infra/modules/aks infra/modules/network; do
-  if [ -d "$module_dir" ]; then
+for module_dir in infra/modules/*; do
+  if [ -d "$module_dir" ] && find "$module_dir" -maxdepth 1 -name '*.tf' -print -quit | grep -q .; then
     terraform_dirs+=("$module_dir")
   fi
 done

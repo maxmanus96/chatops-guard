@@ -110,6 +110,51 @@ variable "aks_node_subnet_prefixes" {
   }
 }
 
+variable "enable_event_grid" {
+  description = "Whether this root should create the first Event Grid custom topic for application events."
+  type        = bool
+  default     = true
+}
+
+variable "event_grid_topic_name" {
+  description = "Name of the first Event Grid custom topic used for ChatOps Guard application events."
+  type        = string
+  default     = "evgt-chatops-guard-dev"
+
+  validation {
+    condition     = trimspace(var.event_grid_topic_name) != ""
+    error_message = "event_grid_topic_name must not be empty."
+  }
+
+  validation {
+    condition     = length(var.event_grid_topic_name) <= 50 && can(regex("^[A-Za-z0-9-]+$", var.event_grid_topic_name))
+    error_message = "event_grid_topic_name must be 50 characters or fewer and contain only letters, numbers, and hyphens."
+  }
+}
+
+variable "event_grid_input_schema" {
+  description = "Schema expected for events published to the Event Grid topic."
+  type        = string
+  default     = "EventGridSchema"
+
+  validation {
+    condition     = contains(["EventGridSchema", "CloudEventSchemaV1_0", "CustomEventSchema"], var.event_grid_input_schema)
+    error_message = "event_grid_input_schema must be EventGridSchema, CloudEventSchemaV1_0, or CustomEventSchema."
+  }
+}
+
+variable "event_grid_public_network_access_enabled" {
+  description = "Whether public network access is enabled for the Event Grid topic. Keep false until a private endpoint or explicit temporary dev publishing path exists."
+  type        = bool
+  default     = false
+}
+
+variable "event_grid_local_auth_enabled" {
+  description = "Whether local key-based authentication is enabled for the Event Grid topic. Keep false to prefer Entra ID based publishing."
+  type        = bool
+  default     = false
+}
+
 variable "log_analytics_workspace_name" {
   description = "Name of the existing Log Analytics workspace used for AKS monitoring."
   type        = string

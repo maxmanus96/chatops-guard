@@ -49,7 +49,7 @@ This file is a grouped planning view of the current backlog after the recent boo
   - [ ] Verify managed Entra behavior during the next intentionally enabled AKS rollout
   - [x] #57 Reduce dev-platform AKS demo node cost before tracked rollout
   - [ ] Keep AKS design decisions explicit: egress, admin access path, private-cluster timing
-  - [ ] #16 INF-03 · Event Grid + Topic
+  - [x] #16 INF-03 · Event Grid + Topic
   - [ ] #17 INF-04 · Azure OpenAI (private endpoint)
   - [ ] #18 INF-05 · Key Vault + Workload Identity
 
