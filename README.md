@@ -153,7 +153,21 @@ We welcome contributions to ChatOps Guard! Here's how you can help:
 
 ### Development Setup
 
-Development setup instructions will be added as the project structure is established.
+For Terraform and workflow changes, use the local validation helper before pushing:
+
+```bash
+scripts/local_validate.sh
+```
+
+From the Flatpak/toolbox setup used for this project:
+
+```bash
+flatpak-spawn --host toolbox run -c dev bash -lc 'cd /var/home/maxmanus/Dokumente/Coding/chatops-guard && scripts/local_validate.sh'
+```
+
+The helper checks the same low-cost path we care about locally: workflow YAML parsing, `actionlint`, Terraform format/init/validate, and Checkov scans for the active Terraform roots. The expected toolbox tools are Terraform, Checkov, PyYAML, Ruby, and actionlint.
+
+The GitHub Wiki should stay a navigation layer, not a second source of truth. A starter Wiki page is tracked at [docs/wiki/Home.md](docs/wiki/Home.md) so changes remain reviewable before being copied or synced to the GitHub Wiki.
 
 ## Security
 

@@ -34,6 +34,7 @@
 6. Dependabot is enabled for GitHub Actions and Terraform provider updates so dependency bumps arrive as reviewable PRs instead of silent drift.
 7. `tf-unit-tests.yaml` now validates the live `dev` root, `dev-platform`, and local modules, and Checkov SARIF now covers both active roots.
 8. `tf-destroy.yaml` provides a guarded manual destroy path for cost-control or teardown scenarios. Destroy defaults to `dev-platform`; destroying `dev` requires an extra bootstrap/state confirmation phrase.
+9. `scripts/local_validate.sh` mirrors the low-cost local checks before push: YAML parsing, `actionlint`, Terraform format/init/validate, and Checkov for the active Terraform roots.
 
 ## Security Hardening Status (Dev)
 | Control | Status | Notes |
@@ -55,9 +56,9 @@
 2. Keep AKS disabled in `infra/envs/dev`; the bootstrap root should not silently grow into the long-term platform root.
 3. Keep AKS disabled by default for cost control unless there is an active demo/learning session and a clear teardown plan.
 4. Watch the first scheduled/manual drift run from merged PR `#59` to confirm separate drift issues per environment.
-5. Merge the issue `#62` workflow/security PR, then configure split Azure identities in GitHub secrets when ready.
+5. Configure split Azure identities in GitHub secrets when ready: `AZURE_PLAN_CLIENT_ID` for plan/drift and `AZURE_APPLY_CLIENT_ID` for apply/destroy.
 6. After split identities are proven, remove the legacy `AZURE_CLIENT_ID` fallback from Terraform workflows.
-7. Close stale issue hygiene for delivered workflow/bootstrap work if GitHub has not already caught up, especially issue `#43`.
+7. Continue stale issue hygiene for delivered workflow/bootstrap work if GitHub has not already caught up.
 8. Then revisit additional dev hardening upgrades such as SAS policy, CMK, private endpoints, or GRS.
 
 ## ROI Priority Order (2026-04-25)
@@ -72,9 +73,9 @@
 1. Finish the staged dev-platform rollout path and keep the new GitHub Terraform coverage stable:
    - `#12`, `#50`, `#53`, `#55`
 2. Improve supply-chain and project automation with mostly engineering time, not cloud spend:
-   - `#28`, `#30`, `#38`, `#39`, `#60`, `#62`
+   - `#28`, `#30`, `#38`, `#39`, `#60`, `#62`, `#70`
 3. Close stale issue hygiene for recently delivered work:
-   - `#1`, `#15`, `#43`
+   - `#1`, `#15`
 
 ### Medium ROI / moderate setup cost
 4. Complete delivery plumbing once images and charts exist:
@@ -89,7 +90,7 @@
    - `#23`, `#25`, `#26`, `#37`
 
 ## Suggested Sequence
-1. Reconcile issue hygiene for delivered infra and workflow work (`#1`, `#14`, `#15`, `#43`).
+1. Reconcile issue hygiene for delivered infra and workflow work (`#1`, `#14`, `#15`).
 2. Keep AKS work on `infra/envs/dev-platform` instead of adding more module-only hardening or mixing platform resources into `infra/envs/dev`.
 3. Use the new `infra/modules/network` foundation and the existing Log Analytics workspace lookup as the demo-ready dependency path.
 4. Keep AKS cost controlled: `enable_aks = false` remains the repo default, and intentional enables need an explicit teardown path.
