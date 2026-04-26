@@ -150,7 +150,7 @@ jobs:
     # If changes are detected, create a new issue
     - name: Open or update drift issue
       if: steps.tf-plan.outputs.exitcode == 2
-      uses: actions/github-script@v7
+      uses: actions/github-script@v9
       env:
         TF_ENV: "${{ env.TF_ENV }}"
         SUMMARY: "${{ steps.tf-plan-string.outputs.summary }}"
@@ -198,7 +198,7 @@ jobs:
     # If changes aren't detected, close any open drift issues
     - name: Close resolved drift issue
       if: steps.tf-plan.outputs.exitcode == 0
-      uses: actions/github-script@v7
+      uses: actions/github-script@v9
       env:
         TF_ENV: "${{ env.TF_ENV }}"
       with:
