@@ -92,7 +92,7 @@ jobs:
       # Lint Terraform with TFLint on PRs
       - name: Set up TFLint
         if: env.IS_DEPENDABOT_PR != 'true'
-        uses: terraform-linters/setup-tflint@v4
+        uses: terraform-linters/setup-tflint@v6
         with:
           tflint_version: v0.59.1   # Use >=0.54.0 where `call_module_type` is supported
 
