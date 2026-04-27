@@ -35,9 +35,9 @@
 5. `tf-drift` now runs in matrix mode for `dev` and `dev-platform`, uses Azure OIDC login, creates or closes environment-specific drift issues, and publishes redacted count summaries instead of full plan text in issues.
 6. `pr-quality.yaml` provides static automated PR review without Azure login: workflow linting via `actionlint` plus Terraform `fmt/init/validate` over the active roots/modules.
 7. Dependabot is enabled for GitHub Actions and Terraform provider updates so dependency bumps arrive as reviewable PRs instead of silent drift.
-8. `tf-unit-tests.yaml` now validates the live `dev` root, `dev-platform`, and local modules, and Checkov SARIF now covers both active roots.
+8. `tf-unit-tests.yaml` now validates the live `dev` root, `dev-platform`, and local modules, and Checkov plus Trivy SARIF now cover the active IaC surface.
 9. `tf-destroy.yaml` provides a guarded manual destroy path for cost-control or teardown scenarios. Destroy defaults to `dev-platform`; destroying `dev` requires an extra bootstrap/state confirmation phrase.
-10. `scripts/local_validate.sh` mirrors the low-cost local checks before push: YAML parsing, `actionlint`, Terraform format/init/validate, and Checkov for the active Terraform roots.
+10. `scripts/local_validate.sh` mirrors the low-cost local checks before push: YAML parsing, `actionlint`, Terraform format/init/validate, and Checkov for the active Terraform roots. Trivy remains CI-only until the local toolbox has the binary installed.
 
 ## Security Hardening Status (Dev)
 | Control | Status | Notes |
@@ -48,6 +48,7 @@
 | Diagnostics to Log Analytics | ✅ | Dev LA workspace with 30-day retention; diagnostics now target the blob service scope Azure actually supports. |
 | Blob versioning | ✅ | Kept enabled on the dev state account to improve tfstate recovery; extra blob storage cost should stay modest for this small dev backend. |
 | Checkov skips (dev) | ⚠️ | CKV2_AZURE_1, CKV_AZURE_206, CKV_AZURE_59, CKV2_AZURE_33, CKV_AZURE_33, CKV2_AZURE_21 (documented inline). |
+| Trivy skip (dev) | ⚠️ | AVD-AZU-0012 is the same intentional public-network state-backend tradeoff as the Checkov public network skip. |
 | AKS subnet NSG | ✅ | `infra/modules/network` associates the AKS node subnet with a minimal NSG; no broad inbound rules are added. |
 | Event Grid local auth | ✅ | The first custom topic disables local key auth so future publishing can use Entra ID/RBAC instead of shared keys. |
 | Event Grid public access | ✅ | Public network access is disabled on the first topic; the later event-pipeline work must deliberately choose private endpoint or a temporary dev publishing exception. |
@@ -56,6 +57,7 @@
 | Customer-managed keys | ⏳ | Requires Key Vault + key rotation; deferred for cost reasons. |
 | Private endpoints | ⏳ | Adds VNets/DNS and billing overhead; hold until prod readiness. |
 | Geo-redundant replication | ⏳ | LRS kept for budget; document justification in code comment. |
+| Trivy IaC scan gate | ✅ | Added to Terraform Unit Tests as a second IaC scanner with SARIF upload; image scanning is deferred until container images exist. |
 
 ## Next Steps
 1. Refresh local Azure auth with `az login` before making any live cost claim about AKS or VMSS resources.
@@ -65,8 +67,9 @@
 5. Apply the issue `#16` Event Grid topic from `dev-platform`, then keep later subscriptions/queue/summariser work in separate PRs.
 6. Configure split Azure identities in GitHub secrets when ready: `AZURE_PLAN_CLIENT_ID` for plan/drift and `AZURE_APPLY_CLIENT_ID` for apply/destroy.
 7. After split identities are proven, remove the legacy `AZURE_CLIENT_ID` fallback from Terraform workflows.
-8. Continue stale issue hygiene for delivered workflow/bootstrap work if GitHub has not already caught up.
-9. Then revisit additional dev hardening upgrades such as SAS policy, CMK, private endpoints, or GRS.
+8. Install Trivy in the local toolbox and add it to `scripts/local_validate.sh` after confirming the same findings as CI.
+9. Continue stale issue hygiene for delivered workflow/bootstrap work if GitHub has not already caught up.
+10. Then revisit additional dev hardening upgrades such as SAS policy, CMK, private endpoints, or GRS.
 
 ## ROI Priority Order (2026-04-25)
 

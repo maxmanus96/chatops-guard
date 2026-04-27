@@ -31,6 +31,7 @@ resource "azurerm_resource_group" "state" {
   location = var.location      # eg "westeurope"
 }
 
+#trivy:ignore:AVD-AZU-0012
 resource "azurerm_storage_account" "state" {
   # checkov:skip=CKV2_AZURE_1: CMK deferred in dev to avoid Key Vault cost/overhead
   # checkov:skip=CKV_AZURE_206: LRS kept intentionally for budget-friendly dev state

@@ -75,9 +75,13 @@ jobs:
           dirs=(
             infra/envs/dev
             infra/envs/dev-platform
-            infra/modules/aks
-            infra/modules/network
           )
+
+          for module_dir in infra/modules/*; do
+            if [ -d "${module_dir}" ] && find "${module_dir}" -maxdepth 1 -name '*.tf' -print -quit | grep -q .; then
+              dirs+=("${module_dir}")
+            fi
+          done
 
           for dir in "${dirs[@]}"; do
             echo "::group::${dir}"

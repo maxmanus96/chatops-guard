@@ -19,6 +19,7 @@ cd "$ROOT_DIR"
 export AZURE_CONFIG_DIR="${AZURE_CONFIG_DIR:-${TMPDIR:-/tmp}/chatops-guard-azure-cli}"
 mkdir -p "$AZURE_CONFIG_DIR"
 TF_DATA_ROOT="$(mktemp -d "${TMPDIR:-/tmp}/chatops-guard-tfdata.XXXXXX")"
+trap 'rm -rf "$TF_DATA_ROOT"' EXIT
 
 need actionlint
 need checkov

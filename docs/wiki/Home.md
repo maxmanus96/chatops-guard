@@ -37,6 +37,10 @@ This mirrors the low-cost CI checks where practical: YAML parsing, actionlint,
 Terraform format/init/validate, and Checkov scans for the active Terraform
 roots.
 
+GitHub Terraform Unit Tests additionally run Trivy IaC scanning and upload SARIF
+results. Image scanning is intentionally deferred until the repo has a real
+Docker/ACR build path.
+
 ## Wiki Policy
 
 Do not let the Wiki become a second source of truth. Use it as a lightweight

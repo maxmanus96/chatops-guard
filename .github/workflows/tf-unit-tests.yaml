@@ -44,8 +44,8 @@ jobs:
     - name: Terraform Init
       run: |
         dirs="infra/envs/dev infra/envs/dev-platform"
-        for module_dir in infra/modules/aks infra/modules/network; do
-          if [ -d "$module_dir" ]; then
+        for module_dir in infra/modules/*; do
+          if [ -d "$module_dir" ] && find "$module_dir" -maxdepth 1 -name '*.tf' -print -quit | grep -q .; then
             dirs="$dirs $module_dir"
           fi
         done
@@ -56,8 +56,8 @@ jobs:
     - name: Terraform Validate
       run: |
         dirs="infra/envs/dev infra/envs/dev-platform"
-        for module_dir in infra/modules/aks infra/modules/network; do
-          if [ -d "$module_dir" ]; then
+        for module_dir in infra/modules/*; do
+          if [ -d "$module_dir" ] && find "$module_dir" -maxdepth 1 -name '*.tf' -print -quit | grep -q .; then
             dirs="$dirs $module_dir"
           fi
         done
@@ -68,8 +68,8 @@ jobs:
     - name: Terraform Format
       run: |
         dirs="infra/envs/dev infra/envs/dev-platform"
-        for module_dir in infra/modules/aks infra/modules/network; do
-          if [ -d "$module_dir" ]; then
+        for module_dir in infra/modules/*; do
+          if [ -d "$module_dir" ] && find "$module_dir" -maxdepth 1 -name '*.tf' -print -quit | grep -q .; then
             dirs="$dirs $module_dir"
           fi
         done
@@ -110,3 +110,32 @@ jobs:
       with:
         sarif_file: results.sarif
         category: checkov-${{ matrix.target.name }}
+
+  trivy-iac:
+    name: 'Trivy IaC'
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    # Trivy complements Checkov with a second IaC scanner. Image scanning is
+    # deferred until this repo has a real Docker/ACR build path.
+    - name: Run Trivy IaC scan
+      uses: aquasecurity/trivy-action@v0.36.0
+      with:
+        scan-type: config
+        scan-ref: infra
+        hide-progress: true
+        format: sarif
+        output: trivy-results.sarif
+        exit-code: '1'
+        severity: CRITICAL,HIGH
+        limit-severities-for-sarif: true
+
+    - name: Upload Trivy SARIF file
+      if: always()
+      uses: github/codeql-action/upload-sarif@v4
+      with:
+        sarif_file: trivy-results.sarif
+        category: trivy-iac
