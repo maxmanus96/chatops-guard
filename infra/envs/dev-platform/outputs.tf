@@ -28,6 +28,26 @@ output "log_analytics_workspace_id" {
   value       = data.azurerm_log_analytics_workspace.logs.id
 }
 
+output "event_grid_topic_id" {
+  description = "Event Grid topic resource ID for application events."
+  value       = var.enable_event_grid ? module.event_grid[0].id : null
+}
+
+output "event_grid_topic_name" {
+  description = "Event Grid topic name for application events."
+  value       = var.enable_event_grid ? module.event_grid[0].name : null
+}
+
+output "event_grid_topic_endpoint" {
+  description = "Event Grid topic publish endpoint for application events."
+  value       = var.enable_event_grid ? module.event_grid[0].endpoint : null
+}
+
+output "event_grid_identity_principal_id" {
+  description = "Principal ID of the Event Grid topic system-assigned managed identity."
+  value       = var.enable_event_grid ? module.event_grid[0].identity_principal_id : null
+}
+
 output "aks_id" {
   description = "AKS cluster resource ID."
   value       = var.enable_aks ? module.aks[0].id : null

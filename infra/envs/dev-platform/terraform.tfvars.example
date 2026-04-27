@@ -17,6 +17,14 @@ vnet_address_space       = ["10.30.0.0/16"]
 aks_node_subnet_name     = "snet-aks-nodes"
 aks_node_subnet_prefixes = ["10.30.0.0/24"]
 
+# First event-ingestion entry point. The topic itself is low-cost because it is
+# usage based; subscriptions and consumers come later in the event pipeline.
+enable_event_grid                      = true
+event_grid_topic_name                  = "evgt-chatops-guard-dev"
+event_grid_input_schema                = "EventGridSchema"
+event_grid_public_network_access_enabled = false
+event_grid_local_auth_enabled          = false
+
 # Existing monitoring dependency looked up from the bootstrap resources.
 log_analytics_workspace_name        = "log-chatops-guard-dev"
 log_analytics_resource_group_name   = "rg-chatops-guard-state"

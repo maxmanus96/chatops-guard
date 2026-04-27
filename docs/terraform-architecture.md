@@ -15,7 +15,8 @@ The repository already has a live `dev` Terraform layout under `infra/envs/dev` 
 - `infra/envs/prod` exists as a placeholder.
 - `infra/modules/aks` now exists as the first reusable module, delivered by issue `#1` and PR `#40`.
 - `infra/modules/network` now exists as a sibling module for the minimal dev VNet/subnet foundation. It owns the AKS node subnet and its NSG association so subnet security stays with the subnet instead of being hidden inside the AKS module.
-- `infra/envs/dev-platform` now exists as the first thin non-bootstrap environment root that composes both modules without changing the live bootstrap root.
+- `infra/modules/event-grid` now exists as the first event-ingestion module. It creates a Basic/Event Grid custom topic only; subscriptions and queue/summariser consumers are later pipeline work.
+- `infra/envs/dev-platform` now exists as the first thin non-bootstrap environment root that composes the platform modules without changing the live bootstrap root.
 - That root now has its own backend/state, has been safely applied for the platform resource group and network foundation, and can produce a real `enable_aks = true` cluster plan while `enable_aks = false` still keeps cluster creation off by default.
 - When `enable_aks = true`, the root now also requires explicit `api_server_authorized_ip_ranges` so the first public dev cluster does not accidentally expose its API to the world.
 - The first AKS rollout path is intentionally local-first: a local untracked `infra/envs/dev-platform/terraform.tfvars` can enable AKS and carry the operator's `/32` admin IP without turning that machine-specific data into a repo default.
@@ -23,6 +24,7 @@ The repository already has a live `dev` Terraform layout under `infra/envs/dev` 
 - The first demo AKS rollout originally kept local accounts enabled because AKS rejects that setting on Kubernetes 1.25+ clusters without managed Entra / AAD integration first. Issue `#52` wired managed Entra into Terraform so `local_account_disabled = true` is now the intended AKS-enabled path.
 - For issue `#52`, the chosen identity model is a dedicated Entra admin group rather than a personal user object. That keeps admin access transferable and avoids baking one person's object ID into the cluster access story.
 - Issue `#52` intentionally keeps `azure_rbac_enabled = false`. That is the higher-ROI sequence: land managed authentication and disable local accounts first, then introduce Azure RBAC only when its role model is designed on purpose.
+- Issue `#16` starts the event path with a Basic custom topic instead of an Event Grid Namespace. That keeps the first step cheap and simple while still giving future application events a real Azure entry point. Local key auth and public network access are disabled on the topic; the later event-pipeline work must deliberately add private endpoint access or a temporary dev publishing exception.
 
 ## Decision
 
@@ -87,11 +89,12 @@ Why the name is explicit right now:
 
 ## Next safe step after that scaffold
 
-The network side is now handled by `infra/modules/network`, and the monitoring side is resolved through an explicit Log Analytics workspace lookup from the existing bootstrap resources.
+The network side is now handled by `infra/modules/network`, the event-ingestion side starts with `infra/modules/event-grid`, and the monitoring side is resolved through an explicit Log Analytics workspace lookup from the existing bootstrap resources.
 
 That local rollout proof is now done, and GitHub Terraform validation/plan/apply already includes `dev-platform`. The next real decisions are:
 - keep issue `#55` focused on environment-aware drift coverage for both `dev` and `dev-platform`
 - verify live Azure cost state after refreshing `az login`, then only run AKS when there is an active demo/learning need
+- keep Event Grid subscriptions/queues/summariser consumers separate from the topic-only issue `#16` slice, including the explicit publisher network-access decision
 - defer Azure RBAC and private-cluster work until the demo cluster access model needs those controls
 
 That keeps the already-applied `dev` state stable while moving AKS work from module-only scaffolding toward real environment composition.
