@@ -80,6 +80,8 @@ This file is a grouped planning view of the current backlog after the recent boo
   - [ ] #28 SEC-01 · Trivy image + IaC scan gate
   - [ ] #30 SEC-03 · SBOM generation & upload
   - [ ] #31 CI-01 · Build & push images to ACR
+  - [x] Add the first real image candidate with `apps/summariser`, local Podman build instructions, and CI image scan
+  - [ ] Add ACR Basic plus push workflow only after the summariser image contract is green
   - [ ] #8 Secure ACR Images when they are available
 
 ### Deployment and promotion workflows
@@ -120,6 +122,8 @@ This file is a grouped planning view of the current backlog after the recent boo
 - Dependencies: Event Grid and queue infrastructure, Azure OpenAI access, service runtime decisions
 - Tasks:
   - [ ] #24 SUM-01 · Python FastAPI summariser
+  - [x] Add minimal FastAPI summariser skeleton with `/healthz` and `/summarise`
+  - [x] Keep the first summariser rule-based so Docker/scan/deploy plumbing can be proven before Azure OpenAI cost is introduced
   - [ ] #25 SUM-02 · LangChain prompt w/ Azure OpenAI
   - [ ] #27 API-01 · Event Grid -> Queue -> Summariser
 

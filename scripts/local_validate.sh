@@ -23,6 +23,7 @@ TF_DATA_ROOT="$(mktemp -d "${TMPDIR:-/tmp}/chatops-guard-tfdata.XXXXXX")"
 need actionlint
 need checkov
 need python3
+need pytest
 need ruby
 need terraform
 
@@ -81,5 +82,8 @@ done
 section "Checkov active Terraform roots"
 checkov -d infra/envs/dev --framework terraform --quiet
 checkov -d infra/envs/dev-platform --framework terraform --quiet
+
+section "Summariser app tests"
+PYTHONPATH=apps/summariser/src pytest apps/summariser/tests
 
 section "Local validation complete"

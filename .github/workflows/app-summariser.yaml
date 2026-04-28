@@ -1,0 +1,64 @@
+name: 'Summariser App CI'
+
+on:
+  push:
+    paths:
+      - 'apps/summariser/**'
+      - '.github/workflows/app-summariser.yaml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'apps/summariser/**'
+      - '.github/workflows/app-summariser.yaml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+
+concurrency:
+  group: app-summariser-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-build-scan:
+    name: 'Test, Build, Scan'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+          cache: pip
+          cache-dependency-path: apps/summariser/pyproject.toml
+
+      - name: Install test dependencies
+        run: python -m pip install -e 'apps/summariser[test]'
+
+      - name: Run tests
+        run: pytest apps/summariser
+
+      - name: Build image
+        run: docker build -t chatops-guard/summariser:${{ github.sha }} apps/summariser
+
+      - name: Run Trivy image scan
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: chatops-guard/summariser:${{ github.sha }}
+          format: sarif
+          output: trivy-summariser-image.sarif
+          exit-code: '1'
+          severity: CRITICAL,HIGH
+          limit-severities-for-sarif: true
+
+      - name: Upload Trivy SARIF file
+        if: always()
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: trivy-summariser-image.sarif
+          category: trivy-summariser-image
