@@ -37,3 +37,14 @@ infra/modules/**/.terraform.lock.hcl
 .terraformrc
 terraform.rc
 **/.local/*
+
+# Python local test/build artifacts
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.venv/
+dist/
+build/
+*.egg-info/

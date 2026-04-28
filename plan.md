@@ -21,6 +21,7 @@
 - For issue `#52`, the chosen access model is a dedicated Entra admin group, not an individual user object ID. That keeps AKS admin access transferable, reviewable, and easier to explain than binding cluster admin access to one person.
 - Issue `#52` keeps `azure_rbac_enabled = false` in the first managed Entra slice. That is intentional: the smallest useful change is authentication hardening plus disabling local accounts; Azure RBAC role design is a separate authorization rollout.
 - Issue `#16` adds the first Event Grid custom topic in `dev-platform`. The ROI choice is Basic/custom topic, not Event Grid Namespace, because the current application path needs simple event publish/subscribe before MQTT, pull delivery, or higher-throughput namespace features.
+- Issue `#24` now starts with a minimal FastAPI summariser skeleton under `apps/summariser`. This is the first real application image candidate for the Docker/ACR path, but it stays rule-based until Azure OpenAI, secrets, and event subscriptions are introduced deliberately.
 
 ## CI/CD Flow
 1. `tf-plan-apply` workflow (GitHub Actions) runs in matrix mode over `TF_TARGET_ENVS` (defaults to `["dev","dev-platform"]`) and rejects unsupported environment names before Azure login.
@@ -37,7 +38,8 @@
 7. Dependabot is enabled for GitHub Actions and Terraform provider updates so dependency bumps arrive as reviewable PRs instead of silent drift.
 8. `tf-unit-tests.yaml` now validates the live `dev` root, `dev-platform`, and local modules, and Checkov plus Trivy SARIF now cover the active IaC surface.
 9. `tf-destroy.yaml` provides a guarded manual destroy path for cost-control or teardown scenarios. Destroy defaults to `dev-platform`; destroying `dev` requires an extra bootstrap/state confirmation phrase.
-10. `scripts/local_validate.sh` mirrors the low-cost local checks before push: YAML parsing, `actionlint`, Terraform format/init/validate, and Checkov for the active Terraform roots. Trivy remains CI-only until the local toolbox has the binary installed.
+10. `scripts/local_validate.sh` mirrors the low-cost local checks before push: YAML parsing, `actionlint`, Terraform format/init/validate, Checkov for the active Terraform roots, Trivy IaC scanning, and summariser unit tests.
+11. `app-summariser.yaml` tests the FastAPI summariser, builds its container image, and scans that local image with Trivy before any ACR push exists.
 
 ## Security Hardening Status (Dev)
 | Control | Status | Notes |

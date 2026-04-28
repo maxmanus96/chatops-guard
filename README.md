@@ -117,6 +117,7 @@ Configuration details and examples will be documented as features are implemente
   - the blob-service diagnostic setting that sends storage logs/metrics to Log Analytics
 - `infra/modules/aks` now exists as the first reusable platform module, and `infra/envs/dev-platform` is the first thin non-bootstrap root that composes it. That root now has its own backend/state, has safely applied `rg-chatops-guard-platform-dev` plus a minimal VNet/subnet foundation, and can produce a real `enable_aks = true` plan while AKS still stays explicitly gated by default. The AKS node subnet is associated with a minimal NSG owned by `infra/modules/network`; no broad inbound rules are added. When AKS is enabled there, `api_server_authorized_ip_ranges` must also be set so the first demo cluster does not leave its public API open unintentionally.
 - `infra/modules/event-grid` provides the first event-ingestion building block: one Basic/Event Grid custom topic in `dev-platform`. This is intentionally topic-only for issue `#16`; subscriptions, queues, consumers, and summariser wiring belong to later event-pipeline work.
+- `apps/summariser` is the first application skeleton: a minimal FastAPI service with `/healthz` and `/summarise` endpoints. It is intentionally rule-based for now so Docker build, Trivy image scan, and future ACR push can be proven before adding Azure OpenAI cost or secrets.
 - The first AKS rollout path was intentionally local-first to prove the cluster create with an untracked `infra/envs/dev-platform/terraform.tfvars` and a local `/32` admin IP.
 - GitHub Terraform workflows now target both `dev` and `dev-platform` by default, so future AKS Terraform changes can be planned/applied from Actions as well. Drift detection also checks both roots, keeps drift issues environment-specific, and publishes count summaries instead of full Terraform plans in issues.
 - Terraform workflow guardrails now reject unsupported matrix environments before Azure login. Manual destroy defaults to `dev-platform`; destroying the `dev` bootstrap/state root requires an extra bootstrap confirmation phrase.
@@ -168,7 +169,13 @@ From the Flatpak/toolbox setup used for this project:
 flatpak-spawn --host toolbox run -c dev bash -lc 'cd /var/home/maxmanus/Dokumente/Coding/chatops-guard && scripts/local_validate.sh'
 ```
 
-The helper checks the same low-cost path we care about locally: workflow YAML parsing, `actionlint`, Terraform format/init/validate, and Checkov scans for the active Terraform roots. The expected toolbox tools are Terraform, Checkov, PyYAML, Ruby, and actionlint. Trivy IaC scanning currently runs in GitHub Actions; make it part of `scripts/local_validate.sh` after Trivy is installed in the local toolbox.
+The helper checks the same low-cost path we care about locally: workflow YAML parsing, `actionlint`, Terraform format/init/validate, Checkov scans for the active Terraform roots, Trivy IaC scanning, and the summariser unit tests. The expected toolbox tools are Terraform, Checkov, Trivy, PyYAML, Ruby, pytest, and actionlint.
+
+For local container checks, use the host Podman engine:
+
+```bash
+flatpak-spawn --host podman build --format docker -t chatops-guard/summariser:local apps/summariser
+```
 
 Running GitHub Actions locally is only partial. Use `scripts/local_validate.sh` for the reliable local signal; tools such as `act` can emulate some workflow shell steps, but they do not faithfully prove GitHub OIDC, repository secrets, SARIF upload permissions, branch protections, or hosted-runner behavior.
 
