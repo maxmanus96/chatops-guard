@@ -109,7 +109,7 @@ jobs:
       # -------- tfsec (security) --------
       - name: Run tfsec
         if: env.IS_DEPENDABOT_PR != 'true'
-        uses: aquasecurity/tfsec-action@v1.0.0
+        uses: aquasecurity/tfsec-action@v1.0.3
         with:
           working_directory: ${{ env.TF_ENV_DIR }}
           # set to 'true' if you want PRs to show findings but not fail
