@@ -122,7 +122,7 @@ Configuration details and examples will be documented as features are implemente
 - GitHub Terraform workflows now target both `dev` and `dev-platform` by default, so future AKS Terraform changes can be planned/applied from Actions as well. Drift detection also checks both roots, keeps drift issues environment-specific, and publishes count summaries instead of full Terraform plans in issues.
 - Terraform workflow guardrails now reject unsupported matrix environments before Azure login. Manual destroy defaults to `dev-platform`; destroying the `dev` bootstrap/state root requires an extra bootstrap confirmation phrase.
 - Terraform workflows are ready for split Azure OIDC identities: `AZURE_PLAN_CLIENT_ID` for plan/drift, `AZURE_APPLY_CLIENT_ID` for apply/destroy, and `AZURE_CLIENT_ID` only as a legacy fallback during migration.
-- PR review guardrails now include a static, no-Azure-login quality workflow for GitHub Actions syntax (`actionlint`) and Terraform `fmt/init/validate`, plus Dependabot PRs for GitHub Actions and Terraform provider updates. Dependabot pull requests intentionally skip Azure OIDC Terraform plans because Dependabot does not receive the normal Azure secrets; static PR Quality Review and Terraform Unit Tests are the low-cost validation path for those bumps.
+- PR review guardrails now include a static, no-Azure-login quality workflow for GitHub Actions syntax (`actionlint`) and Terraform `fmt/init/validate`, plus Dependabot PRs for GitHub Actions and Terraform provider updates. Terraform Unit Tests also run Checkov and Trivy IaC scanning with SARIF upload. Dependabot pull requests intentionally skip Azure OIDC Terraform plans because Dependabot does not receive the normal Azure secrets; static PR Quality Review and Terraform Unit Tests are the low-cost validation path for those bumps.
 - The current cost-aware demo default for AKS nodes is `Standard_D2as_v5`, not `Standard_D2_v2`. That is the current best-ROI middle ground: materially cheaper than Dv2, more modern, and less memory-constrained than the ultra-cheap `A2_v2` candidate.
 - B-series was not chosen for the demo default because Microsoft documents B-series VMs as unsupported for AKS system node pools.
 - The first demo AKS cluster originally kept local accounts enabled because disabling them on Kubernetes 1.25+ requires managed Entra ID integration. Issue `#52` wired that managed Entra path into Terraform so the next AKS-enabled apply can keep `local_account_disabled` on deliberately instead of by demo shortcut.
@@ -139,6 +139,7 @@ Configuration details and examples will be documented as features are implemente
   - Checkov skips in dev (documented inline in `infra/envs/dev/main.tf`) due to budget/complexity:
     - CKV2_AZURE_1 (CMK), CKV_AZURE_206 (GRS replication), CKV_AZURE_59 (public network), CKV2_AZURE_33 (private endpoint).
     - CKV_AZURE_33 (queue logging), CKV2_AZURE_21 (blob read logging).
+  - Trivy skip in dev: AVD-AZU-0012 is ignored for the same documented state-backend public network tradeoff until a private runner or private endpoint path exists.
 - Budget-conscious items still pending for dev (tracked in [plan.md](plan.md)):
   - Geo-redundant replication (CKV_AZURE_206) intentionally left as LRS to minimize cost.
   - Customer-managed keys (CKV2_AZURE_1), SAS expiration policy (CKV2_AZURE_41), and private endpoints (CKV2_AZURE_33) are deferred until prod hardening.
@@ -168,7 +169,7 @@ From the Flatpak/toolbox setup used for this project:
 flatpak-spawn --host toolbox run -c dev bash -lc 'cd /var/home/maxmanus/Dokumente/Coding/chatops-guard && scripts/local_validate.sh'
 ```
 
-The helper checks the same low-cost path we care about locally: workflow YAML parsing, `actionlint`, Terraform format/init/validate, Checkov scans for the active Terraform roots, and the summariser unit tests. The expected toolbox tools are Terraform, Checkov, PyYAML, Ruby, pytest, and actionlint.
+The helper checks the same low-cost path we care about locally: workflow YAML parsing, `actionlint`, Terraform format/init/validate, Checkov scans for the active Terraform roots, Trivy IaC scanning, and the summariser unit tests. The expected toolbox tools are Terraform, Checkov, Trivy, PyYAML, Ruby, pytest, and actionlint.
 
 For local container checks, use the host Podman engine:
 

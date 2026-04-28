@@ -78,6 +78,10 @@ This file is a grouped planning view of the current backlog after the recent boo
   - [x] #70 DEVX-01 · Add local validation runner and Wiki starter docs
   - [ ] After split Azure identities are proven, remove the legacy `AZURE_CLIENT_ID` fallback from Terraform workflows
   - [ ] #28 SEC-01 · Trivy image + IaC scan gate
+  - [x] Add Trivy IaC/config scanning with SARIF upload to Terraform Unit Tests
+  - [x] Make Terraform CI module validation discover `infra/modules/*` so new modules such as `event-grid` are covered automatically
+  - [ ] Add Trivy image scanning after `#31` creates a real Docker/ACR build path
+  - [ ] Install Trivy in the local toolbox and mirror the CI scan in `scripts/local_validate.sh`
   - [ ] #30 SEC-03 · SBOM generation & upload
   - [ ] #31 CI-01 · Build & push images to ACR
   - [x] Add the first real image candidate with `apps/summariser`, local Podman build instructions, and CI image scan

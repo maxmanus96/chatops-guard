@@ -19,6 +19,7 @@ cd "$ROOT_DIR"
 export AZURE_CONFIG_DIR="${AZURE_CONFIG_DIR:-${TMPDIR:-/tmp}/chatops-guard-azure-cli}"
 mkdir -p "$AZURE_CONFIG_DIR"
 TF_DATA_ROOT="$(mktemp -d "${TMPDIR:-/tmp}/chatops-guard-tfdata.XXXXXX")"
+trap 'rm -rf "$TF_DATA_ROOT"' EXIT
 
 need actionlint
 need checkov
@@ -26,6 +27,7 @@ need python3
 need pytest
 need ruby
 need terraform
+need trivy
 
 terraform_dirs=(
   infra/envs/dev
@@ -44,6 +46,7 @@ printf 'checkov %s\n' "$(checkov --version)"
 python3 -c 'import yaml; print(f"PyYAML {yaml.__version__}")'
 ruby --version
 actionlint -version
+trivy --version
 
 section "YAML parse with PyYAML"
 python3 - <<'PY'
@@ -82,6 +85,9 @@ done
 section "Checkov active Terraform roots"
 checkov -d infra/envs/dev --framework terraform --quiet
 checkov -d infra/envs/dev-platform --framework terraform --quiet
+
+section "Trivy IaC scan"
+trivy config --skip-version-check --misconfig-scanners terraform --severity HIGH,CRITICAL --exit-code 1 infra
 
 section "Summariser app tests"
 PYTHONPATH=apps/summariser/src pytest apps/summariser/tests
