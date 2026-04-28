@@ -155,6 +155,52 @@ variable "event_grid_local_auth_enabled" {
   default     = false
 }
 
+variable "enable_acr" {
+  description = "Whether this root should create the Azure Container Registry for application images. Keep false until the always-on registry cost is accepted."
+  type        = bool
+  default     = false
+}
+
+variable "acr_name" {
+  description = "Globally unique Azure Container Registry name for ChatOps Guard application images. Use only letters and numbers."
+  type        = string
+  default     = "acrchatopsguarddev"
+
+  validation {
+    condition     = can(regex("^[A-Za-z0-9]{5,50}$", var.acr_name))
+    error_message = "acr_name must be 5-50 characters and contain only letters and numbers."
+  }
+}
+
+variable "acr_sku" {
+  description = "ACR SKU. Basic is the budget-friendly dev/demo default; Standard or Premium should be explicit upgrades."
+  type        = string
+  default     = "Basic"
+
+  validation {
+    condition     = contains(["Basic", "Standard", "Premium"], var.acr_sku)
+    error_message = "acr_sku must be Basic, Standard, or Premium."
+  }
+}
+
+variable "acr_admin_enabled" {
+  description = "Whether the ACR admin user is enabled. Keep false and use Entra ID/RBAC instead of registry passwords."
+  type        = bool
+  default     = false
+}
+
+variable "acr_public_network_access_enabled" {
+  description = "Whether public network access is enabled for ACR. For the budget Basic path this stays true and is protected by Entra ID/RBAC; private endpoints require a later Premium decision."
+  type        = bool
+  default     = true
+}
+
+variable "acr_anonymous_pull_enabled" {
+  description = "Whether anonymous image pulls are enabled for ACR. Keep false for private application images."
+  type        = bool
+  default     = false
+}
+
 variable "log_analytics_workspace_name" {
   description = "Name of the existing Log Analytics workspace used for AKS monitoring."
   type        = string

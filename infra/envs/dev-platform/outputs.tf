@@ -48,6 +48,21 @@ output "event_grid_identity_principal_id" {
   value       = var.enable_event_grid ? module.event_grid[0].identity_principal_id : null
 }
 
+output "acr_id" {
+  description = "Azure Container Registry resource ID."
+  value       = var.enable_acr ? module.acr[0].id : null
+}
+
+output "acr_name" {
+  description = "Azure Container Registry name."
+  value       = var.enable_acr ? module.acr[0].name : null
+}
+
+output "acr_login_server" {
+  description = "Azure Container Registry login server used for image tags."
+  value       = var.enable_acr ? module.acr[0].login_server : null
+}
+
 output "aks_id" {
   description = "AKS cluster resource ID."
   value       = var.enable_aks ? module.aks[0].id : null

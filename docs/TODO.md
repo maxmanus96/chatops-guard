@@ -85,7 +85,8 @@ This file is a grouped planning view of the current backlog after the recent boo
   - [ ] #30 SEC-03 · SBOM generation & upload
   - [ ] #31 CI-01 · Build & push images to ACR
   - [x] Add the first real image candidate with `apps/summariser`, local Podman build instructions, and CI image scan
-  - [ ] Add ACR Basic plus push workflow as the next staged delivery step, keeping ACR disabled by default until cost is accepted
+  - [x] Add the disabled-by-default ACR Basic Terraform contract for `dev-platform`
+  - [ ] Enable ACR Basic and add the summariser push workflow only after the always-on registry cost is accepted
   - [ ] #8 Secure ACR Images when they are available
 
 ### Deployment and promotion workflows
