@@ -59,39 +59,40 @@
 | Customer-managed keys | ⏳ | Requires Key Vault + key rotation; deferred for cost reasons. |
 | Private endpoints | ⏳ | Adds VNets/DNS and billing overhead; hold until prod readiness. |
 | Geo-redundant replication | ⏳ | LRS kept for budget; document justification in code comment. |
-| Trivy IaC scan gate | ✅ | Added to Terraform Unit Tests as a second IaC scanner with SARIF upload; image scanning is deferred until container images exist. |
+| Trivy IaC and image scan gates | ✅ | Terraform Unit Tests run Trivy IaC SARIF scanning, `scripts/local_validate.sh` mirrors the IaC scan locally, and `app-summariser.yaml` builds and scans the first summariser image before any ACR push exists. |
 
 ## Next Steps
 1. Refresh local Azure auth with `az login` before making any live cost claim about AKS or VMSS resources.
 2. Keep AKS disabled in `infra/envs/dev`; the bootstrap root should not silently grow into the long-term platform root.
 3. Keep AKS disabled by default for cost control unless there is an active demo/learning session and a clear teardown plan.
-4. Watch the first scheduled/manual drift run from merged PR `#59` to confirm separate drift issues per environment.
-5. Apply the issue `#16` Event Grid topic from `dev-platform`, then keep later subscriptions/queue/summariser work in separate PRs.
-6. Configure split Azure identities in GitHub secrets when ready: `AZURE_PLAN_CLIENT_ID` for plan/drift and `AZURE_APPLY_CLIENT_ID` for apply/destroy.
-7. After split identities are proven, remove the legacy `AZURE_CLIENT_ID` fallback from Terraform workflows.
-8. Install Trivy in the local toolbox and add it to `scripts/local_validate.sh` after confirming the same findings as CI.
+4. Start issue `#31` with a staged ACR contract: add Basic ACR Terraform wiring with `enable_acr = false` first, then enable/push only after accepting the small always-on registry cost.
+5. After ACR exists, connect issue `#8` by granting AKS pull access with managed identity/RBAC instead of registry passwords.
+6. Add issue `#30` SBOM generation once there is a real pushed image artifact to describe.
+7. Configure split Azure identities in GitHub secrets when ready: `AZURE_PLAN_CLIENT_ID` for plan/drift and `AZURE_APPLY_CLIENT_ID` for apply/destroy.
+8. After split identities are proven, remove the legacy `AZURE_CLIENT_ID` fallback from Terraform workflows.
 9. Continue stale issue hygiene for delivered workflow/bootstrap work if GitHub has not already caught up.
 10. Then revisit additional dev hardening upgrades such as SAS policy, CMK, private endpoints, or GRS.
 
-## ROI Priority Order (2026-04-25)
+## ROI Priority Order (2026-04-29)
 
 ### Recommendation
 - Treat bootstrap/state recovery and the recent workflow cleanup as done unless drift or apply proves otherwise.
 - Treat the next AKS slice as controlled rollout work on `infra/envs/dev-platform`: keep the tracked default off, enable AKS only when needed, and destroy/disable it after demos if budget matters more than always-on availability.
 - Use issue `#12` as the architecture anchor until a dedicated follow-up AKS env-root issue exists.
 - Use umbrella issues such as `#2` and `#13` for tracking only; do not let them outrank the scoped implementation work.
+- Treat issue `#28` as delivered after the merged Trivy IaC and summariser image scan work; the next supply-chain step is ACR/SBOM, not more scan scaffolding.
 
 ### Highest ROI / lowest direct cloud cost
 1. Finish the staged dev-platform rollout path and keep the new GitHub Terraform coverage stable:
    - `#12`, `#50`, `#53`, `#55`
 2. Improve supply-chain and project automation with mostly engineering time, not cloud spend:
-   - `#28`, `#30`, `#38`, `#39`, `#60`, `#62`, `#70`
+   - `#30`, `#38`, `#39`
 3. Close stale issue hygiene for recently delivered work:
    - `#1`, `#15`
 
 ### Medium ROI / moderate setup cost
 4. Complete delivery plumbing once images and charts exist:
-   - `#31`, `#32`, `#33`, `#34`, `#8`
+   - `#31`, `#8`, `#32`, `#33`, `#34`
 5. Build the smallest application path that proves the platform idea:
    - `#22`, `#24`, `#27`
 
@@ -106,6 +107,6 @@
 2. Keep AKS work on `infra/envs/dev-platform` instead of adding more module-only hardening or mixing platform resources into `infra/envs/dev`.
 3. Use the new `infra/modules/network` foundation and the existing Log Analytics workspace lookup as the demo-ready dependency path.
 4. Keep AKS cost controlled: `enable_aks = false` remains the repo default, and intentional enables need an explicit teardown path.
-5. After PR `#59` merges, verify scheduled drift detection covers both active Terraform roots without cross-closing issues.
-6. Keep docs aligned with the actual branch and merge state so planning does not outrun code again.
-7. Then return to the smallest application skeleton work.
+5. Keep docs aligned with the actual branch and merge state so planning does not outrun code again.
+6. Start ACR in two steps: first create the disabled Terraform contract, then enable Basic and push only when the budget impact is accepted.
+7. Keep image promotion separate from Helm deployment so `#31` does not absorb `#32`/`#33`.

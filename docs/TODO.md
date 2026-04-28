@@ -1,6 +1,6 @@
 # TODO
 
-Source: GitHub issues plus merged infra/CI work refreshed on 2026-04-25.
+Source: GitHub issues plus merged infra/CI work refreshed on 2026-04-29.
 
 This file is a grouped planning view of the current backlog after the recent bootstrap/state recovery work. Some older issues are now delivered in merged PRs and are shown here as completion or cleanup notes rather than as active implementation tasks.
 
@@ -77,15 +77,15 @@ This file is a grouped planning view of the current backlog after the recent boo
   - [x] #62 SEC-04 · Harden Terraform workflow guardrails and Azure OIDC least privilege
   - [x] #70 DEVX-01 · Add local validation runner and Wiki starter docs
   - [ ] After split Azure identities are proven, remove the legacy `AZURE_CLIENT_ID` fallback from Terraform workflows
-  - [ ] #28 SEC-01 · Trivy image + IaC scan gate
+  - [x] #28 SEC-01 · Trivy image + IaC scan gate
   - [x] Add Trivy IaC/config scanning with SARIF upload to Terraform Unit Tests
   - [x] Make Terraform CI module validation discover `infra/modules/*` so new modules such as `event-grid` are covered automatically
-  - [ ] Add Trivy image scanning after `#31` creates a real Docker/ACR build path
-  - [ ] Install Trivy in the local toolbox and mirror the CI scan in `scripts/local_validate.sh`
+  - [x] Add Trivy image scanning for the summariser CI image before ACR push exists
+  - [x] Install Trivy in the local toolbox and mirror the IaC scan in `scripts/local_validate.sh`
   - [ ] #30 SEC-03 · SBOM generation & upload
   - [ ] #31 CI-01 · Build & push images to ACR
   - [x] Add the first real image candidate with `apps/summariser`, local Podman build instructions, and CI image scan
-  - [ ] Add ACR Basic plus push workflow only after the summariser image contract is green
+  - [ ] Add ACR Basic plus push workflow as the next staged delivery step, keeping ACR disabled by default until cost is accepted
   - [ ] #8 Secure ACR Images when they are available
 
 ### Deployment and promotion workflows
