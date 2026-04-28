@@ -40,6 +40,20 @@ module "event_grid" {
   tags                          = local.tags
 }
 
+module "acr" {
+  count  = var.enable_acr ? 1 : 0
+  source = "../../modules/acr"
+
+  resource_group_name           = azurerm_resource_group.platform.name
+  location                      = azurerm_resource_group.platform.location
+  registry_name                 = var.acr_name
+  sku                           = var.acr_sku
+  admin_enabled                 = var.acr_admin_enabled
+  public_network_access_enabled = var.acr_public_network_access_enabled
+  anonymous_pull_enabled        = var.acr_anonymous_pull_enabled
+  tags                          = local.tags
+}
+
 data "azurerm_log_analytics_workspace" "logs" {
   name                = var.log_analytics_workspace_name
   resource_group_name = var.log_analytics_resource_group_name

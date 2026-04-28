@@ -25,6 +25,15 @@ event_grid_input_schema                = "EventGridSchema"
 event_grid_public_network_access_enabled = false
 event_grid_local_auth_enabled          = false
 
+# First image registry contract for issue #31. Keep disabled until the small
+# always-on ACR cost is accepted and the push workflow is ready.
+enable_acr                            = false
+acr_name                              = "acrchatopsguarddev"
+acr_sku                               = "Basic"
+acr_admin_enabled                     = false
+acr_public_network_access_enabled     = true
+acr_anonymous_pull_enabled            = false
+
 # Existing monitoring dependency looked up from the bootstrap resources.
 log_analytics_workspace_name        = "log-chatops-guard-dev"
 log_analytics_resource_group_name   = "rg-chatops-guard-state"

@@ -12,6 +12,7 @@
 - `infra/modules/aks` exists as the first reusable platform module.
 - `infra/modules/network` now exists as a sibling module for the minimal VNet/subnet foundation.
 - `infra/modules/event-grid` now exists as the first event-ingestion platform module. It creates a Basic/Event Grid custom topic only; subscriptions and consumers are intentionally deferred to later event-pipeline work.
+- `infra/modules/acr` now exists as the first image registry module for issue `#31`. It is wired into `dev-platform` behind `enable_acr = false`, so this PR validates the contract without creating a paid registry yet.
 - `infra/envs/dev-platform` is the first thin non-bootstrap platform root that composes the platform modules. It now has its own backend/state, has safely applied `rg-chatops-guard-platform-dev` plus the first VNet/subnet foundation, and has already completed the first local `enable_aks = true` AKS apply with a clean post-apply plan.
 - The AKS node subnet now has a module-owned NSG association. The NSG intentionally starts without custom allow rules, relying on Azure default deny-inbound behavior while avoiding a risky broad inbound exception.
 - `infra/envs/dev-platform` now also requires `api_server_authorized_ip_ranges` when `enable_aks = true`, so the first public dev AKS apply does not expose the API server broadly by accident.
@@ -55,6 +56,9 @@
 | Event Grid local auth | ✅ | The first custom topic disables local key auth so future publishing can use Entra ID/RBAC instead of shared keys. |
 | Event Grid public access | ✅ | Public network access is disabled on the first topic; the later event-pipeline work must deliberately choose private endpoint or a temporary dev publishing exception. |
 | Event Grid private endpoint | ⏳ | Private endpoint wiring is deferred until a publisher/consumer path exists, avoiding private-link cost and DNS complexity before it is useful. |
+| ACR admin user | ✅ | The ACR contract keeps the admin user disabled and expects Entra ID/RBAC for pushes and pulls. |
+| ACR network posture | ⚠️ | The budget path is Basic ACR with public network access plus RBAC. Private endpoint support is deferred because it requires a Premium SKU decision. |
+| ACR Checkov skips | ⚠️ | CKV_AZURE_139, CKV_AZURE_163, CKV_AZURE_164, CKV_AZURE_165, CKV_AZURE_166, CKV_AZURE_167, CKV_AZURE_233, CKV_AZURE_237 are documented inline for the disabled Basic dev contract. |
 | SAS expiration policy | ⏳ | Terraform support limited; revisit when prod environment is built. |
 | Customer-managed keys | ⏳ | Requires Key Vault + key rotation; deferred for cost reasons. |
 | Private endpoints | ⏳ | Adds VNets/DNS and billing overhead; hold until prod readiness. |
@@ -65,7 +69,7 @@
 1. Refresh local Azure auth with `az login` before making any live cost claim about AKS or VMSS resources.
 2. Keep AKS disabled in `infra/envs/dev`; the bootstrap root should not silently grow into the long-term platform root.
 3. Keep AKS disabled by default for cost control unless there is an active demo/learning session and a clear teardown plan.
-4. Start issue `#31` with a staged ACR contract: add Basic ACR Terraform wiring with `enable_acr = false` first, then enable/push only after accepting the small always-on registry cost.
+4. Enable the staged Basic ACR only after accepting the small always-on registry cost, then add the GitHub push workflow for `apps/summariser`.
 5. After ACR exists, connect issue `#8` by granting AKS pull access with managed identity/RBAC instead of registry passwords.
 6. Add issue `#30` SBOM generation once there is a real pushed image artifact to describe.
 7. Configure split Azure identities in GitHub secrets when ready: `AZURE_PLAN_CLIENT_ID` for plan/drift and `AZURE_APPLY_CLIENT_ID` for apply/destroy.
