@@ -25,6 +25,9 @@ permissions:
   contents: read # Needed to clone repo
   actions: read # Potentially needed for private repositories (see https://github.com/github/codeql-action/issues/2117)
 
+env:
+  TF_VERSION: "1.12.2"
+
 jobs:
   terraform-unit-tests:
     name: 'Terraform Unit Tests'
@@ -37,6 +40,7 @@ jobs:
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v4
       with:
+        terraform_version: ${{ env.TF_VERSION }}
         terraform_wrapper: false
 
     # Initialize and validate the live bootstrap root, the dev platform root,

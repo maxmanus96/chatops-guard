@@ -22,6 +22,7 @@ permissions:
 #These environment variables are used by the terraform azure provider to setup OIDC (OpenID Connect) authentication. 
 env:
   TF_IN_AUTOMATION: "1"
+  TF_VERSION: "1.12.2"
   ARM_USE_OIDC: "true"
   ARM_SUBSCRIPTION_ID: "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
   ARM_TENANT_ID: "${{ secrets.AZURE_TENANT_ID }}"
@@ -63,10 +64,11 @@ jobs:
         tenant-id: ${{ secrets.AZURE_TENANT_ID }}
         subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-    # Install the latest version of the Terraform CLI
+    # Install the repo-pinned Terraform CLI instead of floating on latest.
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v4
       with:
+        terraform_version: ${{ env.TF_VERSION }}
         terraform_wrapper: false
 
     # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
