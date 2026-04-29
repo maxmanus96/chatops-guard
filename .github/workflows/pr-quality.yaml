@@ -23,6 +23,7 @@ concurrency:
 
 env:
   TF_IN_AUTOMATION: "1"
+  TF_VERSION: "1.12.2"
   ACTIONLINT_VERSION: "1.7.12"
   ACTIONLINT_SHA256: "8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8"
 
@@ -63,6 +64,7 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v4
         with:
+          terraform_version: ${{ env.TF_VERSION }}
           terraform_wrapper: false
 
       - name: Terraform Format

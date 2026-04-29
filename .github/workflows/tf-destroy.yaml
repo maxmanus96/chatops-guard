@@ -34,6 +34,7 @@ concurrency:
 
 env:
   TF_IN_AUTOMATION: '1'
+  TF_VERSION: '1.12.2'
   ARM_USE_OIDC: 'true'
   ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
   ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
@@ -97,6 +98,7 @@ jobs:
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v4
       with:
+        terraform_version: ${{ env.TF_VERSION }}
         terraform_wrapper: false
 
     - name: Terraform Init

@@ -26,21 +26,22 @@
 
 ## CI/CD Flow
 1. `tf-plan-apply` workflow (GitHub Actions) runs in matrix mode over `TF_TARGET_ENVS` (defaults to `["dev","dev-platform"]`) and rejects unsupported environment names before Azure login.
-2. Each matrix job:
+2. Terraform GitHub workflows pin the Terraform CLI to `1.12.2` instead of floating on `latest`, so new upstream CLI releases do not unexpectedly break validation or plan/apply behavior.
+3. Each matrix job:
    - Logs into Azure with OIDC.
    - Uses `AZURE_PLAN_CLIENT_ID` for plan jobs and `AZURE_APPLY_CLIENT_ID` for apply jobs, falling back to legacy `AZURE_CLIENT_ID` until split identities are configured.
    - Runs Terraform init/fmt/validate/plan under `infra/envs/<env>` using `-chdir`.
    - Executes TFLint/tfsec scoped to the same directory.
    - Uploads the per-environment plan artifact and computed exit code.
-3. Dependabot pull requests intentionally skip the Azure OIDC Terraform plan path because Dependabot does not receive the normal Azure secrets. Static PR Quality Review and Terraform Unit Tests remain the low-cost validation signal for dependency bumps.
-4. Apply jobs download the matching artifact, inspect the exit code, and only run `terraform apply` when changes exist and the branch is `main`.
-5. `tf-drift` now runs in matrix mode for `dev` and `dev-platform`, uses Azure OIDC login, creates or closes environment-specific drift issues, and publishes redacted count summaries instead of full plan text in issues.
-6. `pr-quality.yaml` provides static automated PR review without Azure login: workflow linting via `actionlint` plus Terraform `fmt/init/validate` over the active roots/modules.
-7. Dependabot is enabled for GitHub Actions and Terraform provider updates so dependency bumps arrive as reviewable PRs instead of silent drift.
-8. `tf-unit-tests.yaml` now validates the live `dev` root, `dev-platform`, and local modules, and Checkov plus Trivy SARIF now cover the active IaC surface.
-9. `tf-destroy.yaml` provides a guarded manual destroy path for cost-control or teardown scenarios. Destroy defaults to `dev-platform`; destroying `dev` requires an extra bootstrap/state confirmation phrase.
-10. `scripts/local_validate.sh` mirrors the low-cost local checks before push: YAML parsing, `actionlint`, Terraform format/init/validate, Checkov for the active Terraform roots, Trivy IaC scanning, and summariser unit tests.
-11. `app-summariser.yaml` tests the FastAPI summariser, builds its container image, and scans that local image with Trivy before any ACR push exists.
+4. Dependabot pull requests intentionally skip the Azure OIDC Terraform plan path because Dependabot does not receive the normal Azure secrets. Static PR Quality Review and Terraform Unit Tests remain the low-cost validation signal for dependency bumps.
+5. Apply jobs download the matching artifact, inspect the exit code, and only run `terraform apply` when changes exist and the branch is `main`.
+6. `tf-drift` now runs in matrix mode for `dev` and `dev-platform`, uses Azure OIDC login, creates or closes environment-specific drift issues, and publishes redacted count summaries instead of full plan text in issues.
+7. `pr-quality.yaml` provides static automated PR review without Azure login: workflow linting via `actionlint` plus Terraform `fmt/init/validate` over the active roots/modules.
+8. Dependabot is enabled for GitHub Actions and Terraform provider updates so dependency bumps arrive as reviewable PRs instead of silent drift.
+9. `tf-unit-tests.yaml` now validates the live `dev` root, `dev-platform`, and local modules, and Checkov plus Trivy SARIF now cover the active IaC surface.
+10. `tf-destroy.yaml` provides a guarded manual destroy path for cost-control or teardown scenarios. Destroy defaults to `dev-platform`; destroying `dev` requires an extra bootstrap/state confirmation phrase.
+11. `scripts/local_validate.sh` mirrors the low-cost local checks before push: YAML parsing, `actionlint`, Terraform format/init/validate, Checkov for the active Terraform roots, Trivy IaC scanning, and summariser unit tests.
+12. `app-summariser.yaml` tests the FastAPI summariser, builds its container image, scans that local image with Trivy, and uploads a CycloneDX SBOM artifact before any ACR push exists.
 
 ## Security Hardening Status (Dev)
 | Control | Status | Notes |
@@ -64,6 +65,7 @@
 | Private endpoints | ⏳ | Adds VNets/DNS and billing overhead; hold until prod readiness. |
 | Geo-redundant replication | ⏳ | LRS kept for budget; document justification in code comment. |
 | Trivy IaC and image scan gates | ✅ | Terraform Unit Tests run Trivy IaC SARIF scanning, `scripts/local_validate.sh` mirrors the IaC scan locally, and `app-summariser.yaml` builds and scans the first summariser image before any ACR push exists. |
+| Summariser image SBOM | ✅ | `app-summariser.yaml` uploads a CycloneDX SBOM artifact for the CI-built summariser image without requiring ACR or Azure spend. |
 
 ## Next Steps
 1. Refresh local Azure auth with `az login` before making any live cost claim about AKS or VMSS resources.
@@ -71,7 +73,7 @@
 3. Keep AKS disabled by default for cost control unless there is an active demo/learning session and a clear teardown plan.
 4. Enable the staged Basic ACR only after accepting the small always-on registry cost, then add the GitHub push workflow for `apps/summariser`.
 5. After ACR exists, connect issue `#8` by granting AKS pull access with managed identity/RBAC instead of registry passwords.
-6. Add issue `#30` SBOM generation once there is a real pushed image artifact to describe.
+6. Keep issue `#30` complete with CI SBOM artifacts; later ACR work can attach SBOMs to registry-pushed images if that becomes useful.
 7. Configure split Azure identities in GitHub secrets when ready: `AZURE_PLAN_CLIENT_ID` for plan/drift and `AZURE_APPLY_CLIENT_ID` for apply/destroy.
 8. After split identities are proven, remove the legacy `AZURE_CLIENT_ID` fallback from Terraform workflows.
 9. Continue stale issue hygiene for delivered workflow/bootstrap work if GitHub has not already caught up.
@@ -89,8 +91,8 @@
 ### Highest ROI / lowest direct cloud cost
 1. Finish the staged dev-platform rollout path and keep the new GitHub Terraform coverage stable:
    - `#12`, `#50`, `#53`, `#55`
-2. Improve supply-chain and project automation with mostly engineering time, not cloud spend:
-   - `#30`, `#38`, `#39`
+2. Improve project automation with mostly engineering time, not cloud spend:
+   - `#38`, `#39`
 3. Close stale issue hygiene for recently delivered work:
    - `#1`, `#15`
 
