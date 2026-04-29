@@ -82,7 +82,8 @@ This file is a grouped planning view of the current backlog after the recent boo
   - [x] Make Terraform CI module validation discover `infra/modules/*` so new modules such as `event-grid` are covered automatically
   - [x] Add Trivy image scanning for the summariser CI image before ACR push exists
   - [x] Install Trivy in the local toolbox and mirror the IaC scan in `scripts/local_validate.sh`
-  - [ ] #30 SEC-03 · SBOM generation & upload
+  - [x] #30 SEC-03 · SBOM generation & upload
+  - [x] Upload a CycloneDX SBOM artifact for the summariser CI image
   - [ ] #31 CI-01 · Build & push images to ACR
   - [x] Add the first real image candidate with `apps/summariser`, local Podman build instructions, and CI image scan
   - [x] Add the disabled-by-default ACR Basic Terraform contract for `dev-platform`

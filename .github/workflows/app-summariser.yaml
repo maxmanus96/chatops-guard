@@ -22,7 +22,7 @@ concurrency:
 
 jobs:
   test-build-scan:
-    name: 'Test, Build, Scan'
+    name: 'Test, Build, Scan, SBOM'
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -46,6 +46,20 @@ jobs:
       - name: Build image
         run: docker build -t chatops-guard/summariser:${{ github.sha }} apps/summariser
 
+      - name: Generate CycloneDX SBOM
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: chatops-guard/summariser:${{ github.sha }}
+          format: cyclonedx
+          output: trivy-summariser-image.cdx.json
+
+      - name: Upload SBOM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: summariser-image-sbom
+          path: trivy-summariser-image.cdx.json
+          retention-days: 30
+
       - name: Run Trivy image scan
         uses: aquasecurity/trivy-action@v0.36.0
         with:
@@ -55,6 +69,7 @@ jobs:
           exit-code: '1'
           severity: CRITICAL,HIGH
           limit-severities-for-sarif: true
+          skip-setup-trivy: true
 
       - name: Upload Trivy SARIF file
         if: always()

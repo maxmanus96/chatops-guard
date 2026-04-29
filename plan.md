@@ -40,7 +40,7 @@
 8. `tf-unit-tests.yaml` now validates the live `dev` root, `dev-platform`, and local modules, and Checkov plus Trivy SARIF now cover the active IaC surface.
 9. `tf-destroy.yaml` provides a guarded manual destroy path for cost-control or teardown scenarios. Destroy defaults to `dev-platform`; destroying `dev` requires an extra bootstrap/state confirmation phrase.
 10. `scripts/local_validate.sh` mirrors the low-cost local checks before push: YAML parsing, `actionlint`, Terraform format/init/validate, Checkov for the active Terraform roots, Trivy IaC scanning, and summariser unit tests.
-11. `app-summariser.yaml` tests the FastAPI summariser, builds its container image, and scans that local image with Trivy before any ACR push exists.
+11. `app-summariser.yaml` tests the FastAPI summariser, builds its container image, scans that local image with Trivy, and uploads a CycloneDX SBOM artifact before any ACR push exists.
 
 ## Security Hardening Status (Dev)
 | Control | Status | Notes |
@@ -64,6 +64,7 @@
 | Private endpoints | ⏳ | Adds VNets/DNS and billing overhead; hold until prod readiness. |
 | Geo-redundant replication | ⏳ | LRS kept for budget; document justification in code comment. |
 | Trivy IaC and image scan gates | ✅ | Terraform Unit Tests run Trivy IaC SARIF scanning, `scripts/local_validate.sh` mirrors the IaC scan locally, and `app-summariser.yaml` builds and scans the first summariser image before any ACR push exists. |
+| Summariser image SBOM | ✅ | `app-summariser.yaml` uploads a CycloneDX SBOM artifact for the CI-built summariser image without requiring ACR or Azure spend. |
 
 ## Next Steps
 1. Refresh local Azure auth with `az login` before making any live cost claim about AKS or VMSS resources.
@@ -71,7 +72,7 @@
 3. Keep AKS disabled by default for cost control unless there is an active demo/learning session and a clear teardown plan.
 4. Enable the staged Basic ACR only after accepting the small always-on registry cost, then add the GitHub push workflow for `apps/summariser`.
 5. After ACR exists, connect issue `#8` by granting AKS pull access with managed identity/RBAC instead of registry passwords.
-6. Add issue `#30` SBOM generation once there is a real pushed image artifact to describe.
+6. Keep issue `#30` complete with CI SBOM artifacts; later ACR work can attach SBOMs to registry-pushed images if that becomes useful.
 7. Configure split Azure identities in GitHub secrets when ready: `AZURE_PLAN_CLIENT_ID` for plan/drift and `AZURE_APPLY_CLIENT_ID` for apply/destroy.
 8. After split identities are proven, remove the legacy `AZURE_CLIENT_ID` fallback from Terraform workflows.
 9. Continue stale issue hygiene for delivered workflow/bootstrap work if GitHub has not already caught up.
@@ -89,8 +90,8 @@
 ### Highest ROI / lowest direct cloud cost
 1. Finish the staged dev-platform rollout path and keep the new GitHub Terraform coverage stable:
    - `#12`, `#50`, `#53`, `#55`
-2. Improve supply-chain and project automation with mostly engineering time, not cloud spend:
-   - `#30`, `#38`, `#39`
+2. Improve project automation with mostly engineering time, not cloud spend:
+   - `#38`, `#39`
 3. Close stale issue hygiene for recently delivered work:
    - `#1`, `#15`
 
