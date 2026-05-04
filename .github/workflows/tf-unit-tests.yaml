@@ -35,7 +35,7 @@ jobs:
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
 
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v4
@@ -95,7 +95,7 @@ jobs:
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
 
     # Keep Checkov scoped to active roots. The dev-platform root exercises the
     # local network and AKS modules through real environment composition.
@@ -121,7 +121,7 @@ jobs:
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
 
     # Trivy complements Checkov with a second IaC scanner. Image scanning is
     # deferred until this repo has a real Docker/ACR build path.
